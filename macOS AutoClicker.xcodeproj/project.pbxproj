@@ -20,6 +20,12 @@
 		AA000024 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100024 /* Project.swift */; };
 		AA000025 /* LogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100025 /* LogEntry.swift */; };
 		AA000026 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = AA800001 /* KeyboardShortcuts */; };
+		AA000030 /* ClickExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100030 /* ClickExecutor.swift */; };
+		AA000031 /* ScreenCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100031 /* ScreenCapture.swift */; };
+		AA000032 /* ScreenRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100032 /* ScreenRecognizer.swift */; };
+		AA000033 /* OCRMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100033 /* OCRMatcher.swift */; };
+		AA000034 /* IPhoneMirroringController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100034 /* IPhoneMirroringController.swift */; };
+		AA000035 /* AutomationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100035 /* AutomationEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +41,12 @@
 		AA100023 /* ProjectSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSettings.swift; sourceTree = "<group>"; };
 		AA100024 /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
 		AA100025 /* LogEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntry.swift; sourceTree = "<group>"; };
+		AA100030 /* ClickExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickExecutor.swift; sourceTree = "<group>"; };
+		AA100031 /* ScreenCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCapture.swift; sourceTree = "<group>"; };
+		AA100032 /* ScreenRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenRecognizer.swift; sourceTree = "<group>"; };
+		AA100033 /* OCRMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRMatcher.swift; sourceTree = "<group>"; };
+		AA100034 /* IPhoneMirroringController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPhoneMirroringController.swift; sourceTree = "<group>"; };
+		AA100035 /* AutomationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationEngine.swift; sourceTree = "<group>"; };
 		AA100010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA100011 /* MacOSAutoClicker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacOSAutoClicker.entitlements; sourceTree = "<group>"; };
 		AA200000 /* macOS AutoClicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "macOS AutoClicker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				AA300002 /* App */,
+				AA300006 /* Engine */,
 				AA300005 /* Models */,
 				AA300004 /* Theme */,
 				AA300003 /* Resources */,
@@ -108,6 +121,19 @@
 				AA100025 /* LogEntry.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		AA300006 /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+				AA100030 /* ClickExecutor.swift */,
+				AA100031 /* ScreenCapture.swift */,
+				AA100032 /* ScreenRecognizer.swift */,
+				AA100033 /* OCRMatcher.swift */,
+				AA100034 /* IPhoneMirroringController.swift */,
+				AA100035 /* AutomationEngine.swift */,
+			);
+			path = Engine;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -206,6 +232,12 @@
 				AA000023 /* ProjectSettings.swift in Sources */,
 				AA000024 /* Project.swift in Sources */,
 				AA000025 /* LogEntry.swift in Sources */,
+				AA000030 /* ClickExecutor.swift in Sources */,
+				AA000031 /* ScreenCapture.swift in Sources */,
+				AA000032 /* ScreenRecognizer.swift in Sources */,
+				AA000033 /* OCRMatcher.swift in Sources */,
+				AA000034 /* IPhoneMirroringController.swift in Sources */,
+				AA000035 /* AutomationEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
