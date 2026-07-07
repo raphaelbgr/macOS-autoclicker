@@ -1,0 +1,45 @@
+# macOS
+.DS_Store
+._*
+*.swp
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods (not used, but standard)
+Pods/
+
+# Fastlane (not used yet)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# User data (NEVER commit)
+projects/
+logs/
+
+# Signing secrets (never commit)
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+AppleWWDRCA.cer
+notarytool_creds.json
+
+# Build output
+dist/
+*.dmg
+*.zip
