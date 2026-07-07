@@ -39,6 +39,28 @@ enum EngineStopReason: Sendable {
     case error(String)
 }
 
+/// Thread-safe holder for the AsyncStream continuation. Lets the engine
+/// expose `events` as a nonisolated property so callers on any actor
+/// (including the main actor) can subscribe without crossing isolation.
+private final class ContinuationBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: AsyncStream<EngineEvent>.Continuation?
+
+    func set(_ cont: AsyncStream<EngineEvent>.Continuation) {
+        lock.lock(); defer { lock.unlock() }
+        continuation = cont
+    }
+    func yield(_ event: EngineEvent) {
+        lock.lock(); defer { lock.unlock() }
+        continuation?.yield(event)
+    }
+    func finish() {
+        lock.lock(); defer { lock.unlock() }
+        continuation?.finish()
+        continuation = nil
+    }
+}
+
 /// Inputs the engine needs. Held by value, snapshot at start().
 struct EngineInputs: Sendable {
     let project: Project
@@ -57,12 +79,17 @@ actor AutomationEngine {
     private let cancellation = TaskCancellation()
     private var currentInputs: EngineInputs?
 
-    private var eventContinuation: AsyncStream<EngineEvent>.Continuation?
+    // The continuation is captured at first subscription; subsequent
+    // emissions go through it. We hold it as a nonisolated `let` constant
+    // so callers can subscribe from any actor (e.g. the main actor) without
+    // crossing isolation boundaries.
+    private let continuationBox = ContinuationBox()
 
     /// Live stream of events. UI subscribes via `for await event in events`.
-    var events: AsyncStream<EngineEvent> {
+    /// Nonisolated so the main-actor AppState can grab it directly.
+    nonisolated var events: AsyncStream<EngineEvent> {
         AsyncStream { continuation in
-            self.eventContinuation = continuation
+            continuationBox.set(continuation)
         }
     }
 
@@ -175,7 +202,7 @@ actor AutomationEngine {
 
         emit(.log(LogEntry("Stopped automation", category: .timelineStop)))
         emit(.finished(.userStopped))
-        eventContinuation?.finish()
+        continuationBox.finish()
     }
 
     // MARK: - Action execution
@@ -275,7 +302,7 @@ actor AutomationEngine {
     }
 
     private func emit(_ event: EngineEvent) {
-        eventContinuation?.yield(event)
+        continuationBox.yield(event)
     }
 
     /// Sleep that's interruptible by both Task.cancel() and our cancellation handle.

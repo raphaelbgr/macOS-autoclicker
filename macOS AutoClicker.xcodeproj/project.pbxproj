@@ -26,6 +26,14 @@
 		AA000033 /* OCRMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100033 /* OCRMatcher.swift */; };
 		AA000034 /* IPhoneMirroringController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100034 /* IPhoneMirroringController.swift */; };
 		AA000035 /* AutomationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100035 /* AutomationEngine.swift */; };
+		AA000040 /* PermissionOnboardingSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100040 /* PermissionOnboardingSheet.swift */; };
+		AA000041 /* PositionPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100041 /* PositionPickerView.swift */; };
+		AA000042 /* RegionOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100042 /* RegionOverlayView.swift */; };
+		AA000043 /* TargetPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100043 /* TargetPickerView.swift */; };
+		AA000044 /* ActionEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100044 /* ActionEditorSheet.swift */; };
+		AA000045 /* TimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100045 /* TimelineView.swift */; };
+		AA000046 /* LogAndPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100046 /* LogAndPreview.swift */; };
+		AA000047 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100047 /* MainWindow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +55,14 @@
 		AA100033 /* OCRMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRMatcher.swift; sourceTree = "<group>"; };
 		AA100034 /* IPhoneMirroringController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPhoneMirroringController.swift; sourceTree = "<group>"; };
 		AA100035 /* AutomationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationEngine.swift; sourceTree = "<group>"; };
+		AA100040 /* PermissionOnboardingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionOnboardingSheet.swift; sourceTree = "<group>"; };
+		AA100041 /* PositionPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PositionPickerView.swift; sourceTree = "<group>"; };
+		AA100042 /* RegionOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionOverlayView.swift; sourceTree = "<group>"; };
+		AA100043 /* TargetPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetPickerView.swift; sourceTree = "<group>"; };
+		AA100044 /* ActionEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionEditorSheet.swift; sourceTree = "<group>"; };
+		AA100045 /* TimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineView.swift; sourceTree = "<group>"; };
+		AA100046 /* LogAndPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogAndPreview.swift; sourceTree = "<group>"; };
+		AA100047 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
 		AA100010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA100011 /* MacOSAutoClicker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacOSAutoClicker.entitlements; sourceTree = "<group>"; };
 		AA200000 /* macOS AutoClicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "macOS AutoClicker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,6 +91,7 @@
 				AA300002 /* App */,
 				AA300006 /* Engine */,
 				AA300005 /* Models */,
+				AA300007 /* UI */,
 				AA300004 /* Theme */,
 				AA300003 /* Resources */,
 			);
@@ -134,6 +151,21 @@
 				AA100035 /* AutomationEngine.swift */,
 			);
 			path = Engine;
+			sourceTree = "<group>";
+		};
+		AA300007 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				AA100047 /* MainWindow.swift */,
+				AA100043 /* TargetPickerView.swift */,
+				AA100042 /* RegionOverlayView.swift */,
+				AA100045 /* TimelineView.swift */,
+				AA100044 /* ActionEditorSheet.swift */,
+				AA100041 /* PositionPickerView.swift */,
+				AA100040 /* PermissionOnboardingSheet.swift */,
+				AA100046 /* LogAndPreview.swift */,
+			);
+			path = UI;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -238,6 +270,14 @@
 				AA000033 /* OCRMatcher.swift in Sources */,
 				AA000034 /* IPhoneMirroringController.swift in Sources */,
 				AA000035 /* AutomationEngine.swift in Sources */,
+				AA000040 /* PermissionOnboardingSheet.swift in Sources */,
+				AA000041 /* PositionPickerView.swift in Sources */,
+				AA000042 /* RegionOverlayView.swift in Sources */,
+				AA000043 /* TargetPickerView.swift in Sources */,
+				AA000044 /* ActionEditorSheet.swift in Sources */,
+				AA000045 /* TimelineView.swift in Sources */,
+				AA000046 /* LogAndPreview.swift in Sources */,
+				AA000047 /* MainWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
