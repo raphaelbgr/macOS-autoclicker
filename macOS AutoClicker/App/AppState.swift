@@ -100,6 +100,34 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Prompt user to pick a folder and import it as a new project.
+    /// Reads legacy Python projects (timeline.json + screenshots/) cleanly.
+    func importProject() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Import"
+        panel.title = "Select a project folder containing timeline.json"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let name = url.lastPathComponent
+        do {
+            _ = try Project.importFrom(folder: url, as: name)
+            loadProjectList()
+            selectProject(name)
+            logger.info("Imported project \"\(name)\"")
+        } catch {
+            logger.error("Import failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Tell the MainWindow to show the Add Action sheet.
+    /// MainWindow observes this flag.
+    @Published var presentingAddAction = false
+    func presentAddAction() {
+        presentingAddAction = true
+    }
+
     // MARK: - Timeline mutation (auto-saves)
 
     func addAction(_ action: ClickAction) {

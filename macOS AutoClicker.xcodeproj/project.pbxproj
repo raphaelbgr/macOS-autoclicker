@@ -10,6 +10,7 @@
 		AA000001 /* MacOSAutoClickerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100001 /* MacOSAutoClickerApp.swift */; };
 		AA000002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100002 /* AppState.swift */; };
 		AA000003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003 /* ContentView.swift */; };
+		AA000007 /* HotkeyNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100007 /* HotkeyNames.swift */; };
 		AA000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100004 /* Assets.xcassets */; };
 		AA000005 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100005 /* LiquidGlass.swift */; };
 		AA000006 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100006 /* DesignTokens.swift */; };
@@ -34,12 +35,14 @@
 		AA000045 /* TimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100045 /* TimelineView.swift */; };
 		AA000046 /* LogAndPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100046 /* LogAndPreview.swift */; };
 		AA000047 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100047 /* MainWindow.swift */; };
+		AA000048 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100048 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		AA100001 /* MacOSAutoClickerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacOSAutoClickerApp.swift; sourceTree = "<group>"; };
 		AA100002 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		AA100003 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AA100007 /* HotkeyNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyNames.swift; sourceTree = "<group>"; };
 		AA100004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA100005 /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
 		AA100006 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
@@ -63,6 +66,7 @@
 		AA100045 /* TimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineView.swift; sourceTree = "<group>"; };
 		AA100046 /* LogAndPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogAndPreview.swift; sourceTree = "<group>"; };
 		AA100047 /* MainWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindow.swift; sourceTree = "<group>"; };
+		AA100048 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AA100010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA100011 /* MacOSAutoClicker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacOSAutoClicker.entitlements; sourceTree = "<group>"; };
 		AA200000 /* macOS AutoClicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "macOS AutoClicker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -104,6 +108,7 @@
 				AA100001 /* MacOSAutoClickerApp.swift */,
 				AA100002 /* AppState.swift */,
 				AA100003 /* ContentView.swift */,
+				AA100007 /* HotkeyNames.swift */,
 				AA100010 /* Info.plist */,
 				AA100011 /* MacOSAutoClicker.entitlements */,
 			);
@@ -157,6 +162,7 @@
 			isa = PBXGroup;
 			children = (
 				AA100047 /* MainWindow.swift */,
+				AA100048 /* SettingsView.swift */,
 				AA100043 /* TargetPickerView.swift */,
 				AA100042 /* RegionOverlayView.swift */,
 				AA100045 /* TimelineView.swift */,
@@ -256,6 +262,7 @@
 				AA000001 /* MacOSAutoClickerApp.swift in Sources */,
 				AA000002 /* AppState.swift in Sources */,
 				AA000003 /* ContentView.swift in Sources */,
+				AA000007 /* HotkeyNames.swift in Sources */,
 				AA000005 /* LiquidGlass.swift in Sources */,
 				AA000006 /* DesignTokens.swift in Sources */,
 				AA000020 /* ClickAction.swift in Sources */,
@@ -278,6 +285,7 @@
 				AA000045 /* TimelineView.swift in Sources */,
 				AA000046 /* LogAndPreview.swift in Sources */,
 				AA000047 /* MainWindow.swift in Sources */,
+				AA000048 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

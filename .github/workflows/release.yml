@@ -1,0 +1,96 @@
+# Build, sign, notarize, and publish a DMG on every `v*` tag push.
+#
+# Required GitHub Actions secrets (set under repo Settings → Secrets):
+#   MAC_SIGNING_IDENTITY   e.g. "Developer ID Application: Fastsoftware UK (ABCDE12345)"
+#   APPLE_DEVID_CERT_BASE64   Developer ID Application certificate, base64-encoded .p12
+#   APPLE_DEVID_CERT_PASSWORD password for the .p12
+#   APPLE_ID               developer account email
+#   APPLE_TEAM_ID          10-character team ID
+#   APPLE_APP_PASSWORD     app-specific password (appleid.apple.com)
+#
+# To cut a release:
+#   git tag v0.1.0
+#   git push origin v0.1.0
+#
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:  # manual trigger for testing
+
+jobs:
+  release:
+    runs-on: macos-14
+    timeout-minutes: 45
+    # Skip signing/notarizing when the Apple secrets aren't configured —
+    # produces an unsigned dev build instead. Tag pushes from forks of this
+    # template will hit this path; the real release flow runs from the
+    # operator-owned repo where secrets ARE set.
+    env:
+      HAVE_APPLE_SECRETS: ${{ secrets.APPLE_ID != '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build (Release)
+        run: ./scripts/build.sh
+
+      - name: Import signing certificate
+        if: ${{ env.HAVE_APPLE_SECRETS == 'true' }}
+        env:
+          APPLE_DEVID_CERT_BASE64: ${{ secrets.APPLE_DEVID_CERT_BASE64 }}
+          APPLE_DEVID_CERT_PASSWORD: ${{ secrets.APPLE_DEVID_CERT_PASSWORD }}
+        run: |
+          # Create a temporary keychain, import the Developer ID cert.
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          security create-keychain -u -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -t 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          CERT_PATH="$RUNNER_TEMP/dev_id.p12"
+          echo "$APPLE_DEVID_CERT_BASE64" | base64 --decode > "$CERT_PATH"
+          security import "$CERT_PATH" -P "$APPLE_DEVID_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Sign + Notarize
+        if: ${{ env.HAVE_APPLE_SECRETS == 'true' }}
+        env:
+          MAC_SIGNING_IDENTITY: ${{ secrets.MAC_SIGNING_IDENTITY }}
+          APPLE_ID:             ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID:        ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD:   ${{ secrets.APPLE_APP_PASSWORD }}
+        run: ./scripts/sign-notarize.sh
+
+      - name: Note — skipping signing (no Apple secrets configured)
+        if: ${{ env.HAVE_APPLE_SECRETS != 'true' }}
+        run: |
+          echo "::warning::No Apple secrets configured — produced an unsigned dev build."
+          echo "Set APPLE_ID / APPLE_TEAM_ID / APPLE_APP_PASSWORD / MAC_SIGNING_IDENTITY / APPLE_DEVID_CERT_* to enable signing."
+
+      - name: Package DMG
+        run: ./scripts/make-dmg.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macOS-OCR-AutoClicker
+          path: dist/
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.dmg
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

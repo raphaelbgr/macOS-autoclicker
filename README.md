@@ -3,7 +3,6 @@
 A native macOS automation tool that watches your screen and clicks automatically when conditions are met. Built in Swift + SwiftUI for macOS 13 (Ventura) and later.
 
 > **by Raphael BGR** · [github.com/raphaelbgr](https://github.com/raphaelbgr)
-> **Status:** 🚧 In development. Phase 1 (scaffold) is being committed now.
 
 ## What it does
 
@@ -51,6 +50,40 @@ open "macOS AutoClicker.xcodeproj"
 ```
 
 Requires Xcode 15+ (developed on Xcode 26 / Swift 6.3). Bundle ID: `com.fastsoftware.mac-autoclicker`.
+
+### Build from the command line
+
+```bash
+./scripts/build.sh           # Release build → dist/macOS AutoClicker.app
+./scripts/make-dmg.sh        # Pack into dist/macOS AutoClicker.dmg
+```
+
+### Distribution (notarized DMG)
+
+For a Gatekeeper-clean release, sign with a Developer ID Application certificate and submit to Apple's notary service:
+
+```bash
+export MAC_SIGNING_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+export APPLE_ID="you@example.com"
+export APPLE_TEAM_ID="ABCDE12345"
+export APPLE_APP_PASSWORD="xxxx-xxxx-xxxx-xxxx"  # app-specific password
+./scripts/build.sh
+./scripts/sign-notarize.sh   # codesign + notarytool + staple
+./scripts/make-dmg.sh
+```
+
+Tag pushes (`git tag v0.1.0 && git push origin v0.1.0`) trigger [.github/workflows/release.yml](.github/workflows/release.yml), which runs the same pipeline on GitHub-hosted macOS runners and publishes a draft GitHub Release with the DMG attached.
+
+### CI secrets (set under Settings → Secrets → Actions)
+
+| Secret | Purpose |
+|---|---|
+| `APPLE_DEVID_CERT_BASE64` | Developer ID Application `.p12`, base64-encoded |
+| `APPLE_DEVID_CERT_PASSWORD` | Password for the `.p12` |
+| `MAC_SIGNING_IDENTITY` | `codesign --sign` identity string |
+| `APPLE_ID` / `APPLE_TEAM_ID` / `APPLE_APP_PASSWORD` | `notarytool` credentials |
+
+If these aren't set, the workflow produces an unsigned dev build instead.
 
 ## Architecture
 

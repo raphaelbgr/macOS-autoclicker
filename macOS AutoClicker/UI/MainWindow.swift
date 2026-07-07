@@ -157,8 +157,14 @@ struct MainWindow: View {
                 }
             }
         }
-        .sheet(isPresented: $showAdd) {
-            ActionEditorSheet(appState: appState, isPresented: $showAdd, editIndex: nil)
+        .sheet(isPresented: $appState.presentingAddAction) {
+            ActionEditorSheet(appState: appState, isPresented: $appState.presentingAddAction, editIndex: nil)
+        }
+        .onChange(of: showAdd) { _ in
+            if showAdd {
+                appState.presentingAddAction = true
+                showAdd = false
+            }
         }
     }
 
