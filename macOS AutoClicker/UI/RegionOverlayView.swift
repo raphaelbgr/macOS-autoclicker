@@ -14,6 +14,7 @@ import SwiftUI
 /// to the user-drawn rectangle in global display coordinates.
 enum RegionPicker {
     /// Show the overlay and await a selection.
+    @MainActor
     static func pick() async -> CGRect? {
         await withCheckedContinuation { continuation in
             RegionOverlayController.present { rect in
@@ -24,6 +25,7 @@ enum RegionPicker {
 }
 
 /// Owns the borderless NSPanel windows (one per display) hosting the overlay.
+@MainActor
 private final class RegionOverlayController: NSObject, NSWindowDelegate {
     private static var current: RegionOverlayController?
     private var panels: [NSPanel] = []
@@ -76,7 +78,7 @@ private final class RegionOverlayController: NSObject, NSWindowDelegate {
     func dismiss() {
         for panel in panels { panel.orderOut(nil) }
         panels.removeAll()
-        RegionOverlayController.current = nil
+        Self.current = nil
     }
 
     private func updateDrag(start: CGPoint, current: CGPoint) {

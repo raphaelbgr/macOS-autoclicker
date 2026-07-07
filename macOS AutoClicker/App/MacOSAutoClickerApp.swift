@@ -33,7 +33,7 @@ struct MacOSAutoClickerApp: App {
             CommandMenu("Automation") {
                 Button("Start") { appState.startAutomation() }
                     .keyboardShortcut("r", modifiers: .command)
-                .disabled(appState.automationRunning)
+                    .disabled(appState.automationRunning)
                 Button("Stop") { appState.stopAutomation() }
                     .keyboardShortcut(".", modifiers: .command)
                     .disabled(!appState.automationRunning)
@@ -46,12 +46,7 @@ struct MacOSAutoClickerApp: App {
                 Button("Settings…") { openSettings() }
                     .keyboardShortcut(",", modifiers: .command)
             }
-
-            CommandGroup(replacing: .appInfo) {
-                Button("About macOS OCR AutoClicker") { openAbout() }
-            }
         }
-        .windowStyle(.titleBar)
         .defaultSize(width: 1280, height: 800)
 
         Settings {
@@ -75,13 +70,5 @@ struct MacOSAutoClickerApp: App {
         } else {
             NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
         }
-    }
-
-    private func openAbout() {
-        NSApp.orderFrontStandardAboutPanel(options: [
-            .applicationName: "macOS OCR AutoClicker",
-            .applicationVersion: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1",
-            .credits: "by Raphael BGR · github.com/raphaelbgr"
-        ])
     }
 }

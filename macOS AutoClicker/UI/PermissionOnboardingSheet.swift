@@ -12,6 +12,9 @@ import SwiftUI
 struct PermissionOnboardingSheet: View {
     @ObservedObject var appState: AppState
     @AppStorage("hasCompletedPermissionOnboarding") private var hasCompleted = false
+    /// Bound to MainWindow's sheet presentation, so setting this false
+    /// actually dismisses the sheet.
+    @Binding var isPresented: Bool
     @State private var screenRecordingRequested = false
     @State private var accessibilityRequested = false
 
@@ -51,12 +54,18 @@ struct PermissionOnboardingSheet: View {
             )
 
             HStack(spacing: 12) {
-                Button("Skip for now") { hasCompleted = true }
-                    .buttonStyle(.bordered)
-                Button("Done") { hasCompleted = true }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!allGranted)
-                    .opacity(allGranted ? 1.0 : 0.5)
+                Button("Skip for now") {
+                    hasCompleted = true
+                    isPresented = false
+                }
+                .buttonStyle(.bordered)
+                Button("Done") {
+                    hasCompleted = true
+                    isPresented = false
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!allGranted)
+                .opacity(allGranted ? 1.0 : 0.5)
             }
         }
         .padding(32)

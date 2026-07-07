@@ -2,9 +2,6 @@
 //  ContentView.swift
 //  macOS AutoClicker
 //
-//  Root content. Hosts MainWindow. Kept as a thin wrapper so the
-//  @main App scene can wire AppState + window sizing in one place.
-//
 
 import SwiftUI
 
