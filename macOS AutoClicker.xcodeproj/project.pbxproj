@@ -13,6 +13,12 @@
 		AA000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100004 /* Assets.xcassets */; };
 		AA000005 /* LiquidGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100005 /* LiquidGlass.swift */; };
 		AA000006 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100006 /* DesignTokens.swift */; };
+		AA000020 /* ClickAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100020 /* ClickAction.swift */; };
+		AA000021 /* TargetSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100021 /* TargetSpec.swift */; };
+		AA000022 /* Timeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100022 /* Timeline.swift */; };
+		AA000023 /* ProjectSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100023 /* ProjectSettings.swift */; };
+		AA000024 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100024 /* Project.swift */; };
+		AA000025 /* LogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100025 /* LogEntry.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +28,12 @@
 		AA100004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA100005 /* LiquidGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlass.swift; sourceTree = "<group>"; };
 		AA100006 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		AA100020 /* ClickAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClickAction.swift; sourceTree = "<group>"; };
+		AA100021 /* TargetSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetSpec.swift; sourceTree = "<group>"; };
+		AA100022 /* Timeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timeline.swift; sourceTree = "<group>"; };
+		AA100023 /* ProjectSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectSettings.swift; sourceTree = "<group>"; };
+		AA100024 /* Project.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Project.swift; sourceTree = "<group>"; };
+		AA100025 /* LogEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntry.swift; sourceTree = "<group>"; };
 		AA100010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA100011 /* MacOSAutoClicker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacOSAutoClicker.entitlements; sourceTree = "<group>"; };
 		AA200000 /* macOS AutoClicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "macOS AutoClicker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -48,6 +60,7 @@
 			isa = PBXGroup;
 			children = (
 				AA300002 /* App */,
+				AA300005 /* Models */,
 				AA300004 /* Theme */,
 				AA300003 /* Resources */,
 			);
@@ -81,6 +94,19 @@
 				AA100006 /* DesignTokens.swift */,
 			);
 			path = Theme;
+			sourceTree = "<group>";
+		};
+		AA300005 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AA100020 /* ClickAction.swift */,
+				AA100021 /* TargetSpec.swift */,
+				AA100022 /* Timeline.swift */,
+				AA100023 /* ProjectSettings.swift */,
+				AA100024 /* Project.swift */,
+				AA100025 /* LogEntry.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -155,6 +181,12 @@
 				AA000003 /* ContentView.swift in Sources */,
 				AA000005 /* LiquidGlass.swift in Sources */,
 				AA000006 /* DesignTokens.swift in Sources */,
+				AA000020 /* ClickAction.swift in Sources */,
+				AA000021 /* TargetSpec.swift in Sources */,
+				AA000022 /* Timeline.swift in Sources */,
+				AA000023 /* ProjectSettings.swift in Sources */,
+				AA000024 /* Project.swift in Sources */,
+				AA000025 /* LogEntry.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
