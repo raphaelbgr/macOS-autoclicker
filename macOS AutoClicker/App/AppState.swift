@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftUI
+import KeyboardShortcuts
 
 @MainActor
 final class AppState: ObservableObject {
@@ -25,4 +26,10 @@ final class AppState: ObservableObject {
     func stopAutomation() {
         automationRunning = false
     }
+}
+
+// Declare the global hotkey names used by KeyboardShortcuts.Name extensions.
+// The actual recorder UI lands in Phase 4.
+extension KeyboardShortcuts.Name {
+    static let toggleAutomation = KeyboardShortcuts.Name("toggleAutomation")
 }

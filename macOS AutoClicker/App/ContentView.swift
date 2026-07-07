@@ -34,13 +34,17 @@ struct ContentView: View {
                         .foregroundStyle(.tint)
                         .modifier(PulsingSymbol())
 
-                    Text("macOS AutoClicker")
+                    Text("macOS OCR AutoClicker")
                         .font(.largeTitle.bold())
 
                     Text("Native automation for any window, region, or full screen.")
                         .font(.title3)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+
+                    Text("by Raphael BGR · github.com/raphaelbgr")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
 
                 // Status card — previews the GlassCard primitive

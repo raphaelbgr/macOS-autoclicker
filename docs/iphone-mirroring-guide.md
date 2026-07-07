@@ -1,24 +1,24 @@
-# Automating iPhone Mirroring with macOS AutoClicker
+# Automating iPhone Mirroring with macOS OCR AutoClicker
 
-iPhone Mirroring is a macOS Sequoia (15.0+) feature that displays and controls your iPhone from your Mac. macOS AutoClicker can watch the iPhone Mirroring window and tap automatically — perfect for idle games, reward collection, and repetitive iOS workflows.
+iPhone Mirroring is a macOS Sequoia (15.0+) feature that displays and controls your iPhone from your Mac. macOS OCR AutoClicker can watch the iPhone Mirroring window and tap automatically — perfect for idle games, reward collection, and repetitive iOS workflows.
 
-> **Requirements:** macOS 15.0+ for iPhone Mirroring itself. AutoClicker runs on 13+, but this guide assumes iPhone Mirroring is available on your Mac.
+> **Requirements:** macOS 15.0+ for iPhone Mirroring itself. macOS OCR AutoClicker runs on 13+, but this guide assumes iPhone Mirroring is available on your Mac.
 
 ## Step 1 — Grant permissions
 
-On first launch macOS AutoClicker asks for two permissions:
+On first launch macOS OCR AutoClicker asks for two permissions:
 
 | Permission | Why |
 |---|---|
 | **Screen Recording** | Capture the iPhone Mirroring window content |
 | **Accessibility** | Send synthetic taps into the window |
 
-System Settings → Privacy & Security → add macOS AutoClicker to both lists.
+System Settings → Privacy & Security → add macOS OCR AutoClicker to both lists.
 
 ## Step 2 — Select the iPhone Mirroring target
 
 1. Open **iPhone Mirroring** on your Mac.
-2. In macOS AutoClicker, create a new project.
+2. In macOS OCR AutoClicker, create a new project.
 3. Under **Target**, choose the **iPhone Mirroring** preset. This locks captures and clicks to the mirrored iPhone display and unlocks the iOS-specific actions (Home, App Switcher, Spotlight, Open/Close App).
 
 ## Step 3 — Build your action timeline

@@ -19,6 +19,7 @@
 		AA000023 /* ProjectSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100023 /* ProjectSettings.swift */; };
 		AA000024 /* Project.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100024 /* Project.swift */; };
 		AA000025 /* LogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100025 /* LogEntry.swift */; };
+		AA000026 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = AA800001 /* KeyboardShortcuts */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -117,6 +118,7 @@
 			buildConfigurationList = AA600000 /* Build configuration list for PBXNativeTarget */;
 			buildPhases = (
 				AA500001 /* Sources */,
+				AA500003 /* Frameworks */,
 				AA500002 /* Resources */,
 			);
 			buildRules = (
@@ -124,6 +126,9 @@
 			dependencies = (
 			);
 			name = "macOS AutoClicker";
+			packageProductDependencies = (
+				AA800001 /* KeyboardShortcuts */,
+			);
 			productName = "macOS AutoClicker";
 			productReference = AA200000 /* macOS AutoClicker.app */;
 			productType = "com.apple.product-type.application";
@@ -151,6 +156,9 @@
 				Base,
 			);
 			mainGroup = AA300000;
+			packageReferences = (
+				AA700001 /* XCRemoteSwiftPackageReference KeyboardShortcuts */,
+			);
 			productRefGroup = AA300010 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -170,6 +178,17 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA500003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000026 /* KeyboardShortcuts in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA500001 /* Sources */ = {
@@ -325,7 +344,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.raphaelbgr.mac-autoclicker";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.fastsoftware.mac-autoclicker";
 				PRODUCT_NAME = "macOS AutoClicker";
 				PRODUCT_NAME_sanitized = "macOS_AutoClicker";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -352,7 +371,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.raphaelbgr.mac-autoclicker";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.fastsoftware.mac-autoclicker";
 				PRODUCT_NAME = "macOS AutoClicker";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -382,6 +401,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AA700001 /* XCRemoteSwiftPackageReference KeyboardShortcuts */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA800001 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA700001 /* XCRemoteSwiftPackageReference KeyboardShortcuts */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 	};
 	rootObject = AA900000 /* Project object */;
