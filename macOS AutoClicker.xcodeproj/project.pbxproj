@@ -36,6 +36,7 @@
 		AA000046 /* LogAndPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100046 /* LogAndPreview.swift */; };
 		AA000047 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100047 /* MainWindow.swift */; };
 		AA000048 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100048 /* SettingsView.swift */; };
+		BB000001 /* AutoClickerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100001 /* AutoClickerUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -70,6 +71,8 @@
 		AA100010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA100011 /* MacOSAutoClicker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacOSAutoClicker.entitlements; sourceTree = "<group>"; };
 		AA200000 /* macOS AutoClicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "macOS AutoClicker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB100001 /* AutoClickerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoClickerUITests.swift; sourceTree = "<group>"; };
+		BB200001 /* macOS AutoClickerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "macOS AutoClickerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -77,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				AA300001 /* macOS AutoClicker */,
+				BB300001 /* macOS AutoClickerUITests */,
 				AA300010 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -85,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				AA200000 /* macOS AutoClicker.app */,
+				BB200001 /* macOS AutoClickerUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -174,6 +179,14 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		BB300001 /* macOS AutoClickerUITests */ = {
+			isa = PBXGroup;
+			children = (
+				BB100001 /* AutoClickerUITests.swift */,
+			);
+			path = "macOS AutoClickerUITests";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -197,7 +210,43 @@
 			productReference = AA200000 /* macOS AutoClicker.app */;
 			productType = "com.apple.product-type.application";
 		};
+		BB600001 /* macOS AutoClickerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BB700000 /* Build configuration list for PBXNativeTarget */;
+			buildPhases = (
+				BB400000 /* Sources */,
+				BB400002 /* Frameworks */,
+				BB400001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BB500002 /* PBXTargetDependency */,
+			);
+			name = "macOS AutoClickerUITests";
+			productName = "macOS AutoClickerUITests";
+			productReference = BB200001 /* macOS AutoClickerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXContainerItemProxy section */
+		BB500001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA900000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA400000;
+			remoteInfo = "macOS AutoClicker";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		BB500002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA400000 /* macOS AutoClicker */;
+			targetProxy = BB500001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		AA900000 /* Project object */ = {
@@ -205,11 +254,15 @@
 			attributes = {
 				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
-				TargetAttributes = {
-					AA400000 = {
-						CreatedOnToolsVersion = 1500;
-					};
+			TargetAttributes = {
+				AA400000 = {
+					CreatedOnToolsVersion = 1500;
 				};
+				BB600001 = {
+					CreatedOnToolsVersion = 1500;
+					TestTargetID = AA400000;
+				};
+			};
 			};
 			buildConfigurationList = AA550000 /* Build configuration list for PBXProject */;
 			compatibilityVersion = "Xcode 14.0";
@@ -228,6 +281,7 @@
 			projectRoot = "";
 			targets = (
 				AA400000 /* macOS AutoClicker */,
+				BB600001 /* macOS AutoClickerUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -241,6 +295,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BB400001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -249,6 +310,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA000026 /* KeyboardShortcuts in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB400002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,6 +354,14 @@
 				AA000046 /* LogAndPreview.swift in Sources */,
 				AA000047 /* MainWindow.swift in Sources */,
 				AA000048 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BB400000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB000001 /* AutoClickerUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -453,9 +529,52 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.fastsoftware.mac-autoclicker";
 				PRODUCT_NAME = "macOS AutoClicker";
+				PRODUCT_NAME_sanitized = "macOS_AutoClicker";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		BB700001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@loader_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.fastsoftware.mac-autoclicker.UITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "macOS AutoClicker";
+			};
+			name = Debug;
+		};
+		BB700002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@loader_path/Frameworks",
+					"@loader_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.fastsoftware.mac-autoclicker.UITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "macOS AutoClicker";
 			};
 			name = Release;
 		};
@@ -476,6 +595,15 @@
 			buildConfigurations = (
 				AA600001 /* Debug */,
 				AA600002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BB700000 /* Build configuration list for PBXNativeTarget */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BB700001 /* Debug */,
+				BB700002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

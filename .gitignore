@@ -43,3 +43,7 @@ notarytool_creds.json
 dist/
 *.dmg
 *.zip
+
+# Coverage / scaffolding
+default.profraw
+opencode.json

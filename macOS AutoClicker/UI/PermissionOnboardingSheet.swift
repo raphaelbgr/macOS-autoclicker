@@ -12,11 +12,17 @@ import SwiftUI
 struct PermissionOnboardingSheet: View {
     @ObservedObject var appState: AppState
     @AppStorage("hasCompletedPermissionOnboarding") private var hasCompleted = false
-    /// Bound to MainWindow's sheet presentation, so setting this false
-    /// actually dismisses the sheet.
+    /// Bound to MainWindow's overlay presentation, so setting this false
+    /// actually hides the onboarding card.
     @Binding var isPresented: Bool
     @State private var screenRecordingRequested = false
     @State private var accessibilityRequested = false
+    /// Cached permission status. Probed asynchronously on appear so the TCC
+    /// calls (CGWindowListCopyWindowInfo / CGPreflightPostEventAccess) never
+    /// run inside SwiftUI's synchronous body evaluation — those calls can
+    /// block or trigger system prompts that stall the render under XCUITest.
+    @State private var screenRecordingGranted = false
+    @State private var accessibilityGranted = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -37,7 +43,7 @@ struct PermissionOnboardingSheet: View {
                 icon: "rectangle.dashed.badge.record",
                 title: "Screen Recording",
                 description: "Capture the window or region you want to automate.",
-                granted: ScreenCapture.hasScreenRecordingPermission,
+                granted: screenRecordingGranted,
                 requested: screenRecordingRequested,
                 actionTitle: "Open Settings",
                 action: requestScreenRecording
@@ -47,11 +53,13 @@ struct PermissionOnboardingSheet: View {
                 icon: "hand.tap.fill",
                 title: "Accessibility",
                 description: "Send synthetic clicks to the target window.",
-                granted: ClickExecutor.hasPostEventPermission,
+                granted: accessibilityGranted,
                 requested: accessibilityRequested,
                 actionTitle: "Request Access",
                 action: requestAccessibility
             )
+
+            executablePathSection
 
             HStack(spacing: 12) {
                 Button("Skip for now") {
@@ -59,6 +67,7 @@ struct PermissionOnboardingSheet: View {
                     isPresented = false
                 }
                 .buttonStyle(.bordered)
+                .accessibilityIdentifier("onboardingSkipButton")
                 Button("Done") {
                     hasCompleted = true
                     isPresented = false
@@ -72,10 +81,25 @@ struct PermissionOnboardingSheet: View {
         .frame(width: 480)
         .glassCard()
         .background(.background)
+        .onAppear { probePermissions() }
     }
 
     private var allGranted: Bool {
-        ScreenCapture.hasScreenRecordingPermission && ClickExecutor.hasPostEventPermission
+        screenRecordingGranted && accessibilityGranted
+    }
+
+    /// Probe TCC permissions on a background thread so the main thread (which
+    /// drives both SwiftUI rendering and XCUITest's accessibility queries) is
+    /// never blocked by CGWindowListCopyWindowInfo or CGPreflightPostEventAccess.
+    private func probePermissions() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let sr = ScreenCapture.hasScreenRecordingPermission
+            let ax = ClickExecutor.hasPostEventPermission
+            DispatchQueue.main.async {
+                screenRecordingGranted = sr
+                accessibilityGranted = ax
+            }
+        }
     }
 
     private func requestScreenRecording() {
@@ -97,6 +121,72 @@ struct PermissionOnboardingSheet: View {
         if let url = URL(string: "x-apple.systempreferences:\(paneID)") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    // MARK: - Executable path display
+
+    /// Path of the running .app bundle and its inner executable. Shown so the
+    /// user can find the exact binary macOS needs added to the Accessibility
+    /// and Screen Recording lists via the `+` flow in System Settings.
+    private var bundlePath: String { Bundle.main.bundlePath }
+    private var executablePath: String? { Bundle.main.executableURL?.path }
+
+    @ViewBuilder
+    private var executablePathSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("App location", systemImage: "folder")
+                .font(.headline)
+
+            Text("Use this exact path when adding the app to the System Settings permission list.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(bundlePath)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if let exec = executablePath, exec != bundlePath {
+                    Text(exec)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                    .fill(.regularMaterial)
+            )
+
+            HStack(spacing: 8) {
+                Button {
+                    NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
+                } label: {
+                    Label("Reveal in Finder", systemImage: "folder")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .accessibilityIdentifier("onboardingRevealInFinderButton")
+
+                Button {
+                    let pb = NSPasteboard.general
+                    pb.clearContents()
+                    pb.setString(bundlePath, forType: .string)
+                } label: {
+                    Label("Copy Path", systemImage: "doc.on.doc")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .accessibilityIdentifier("onboardingCopyPathButton")
+            }
+
+            Text("If the app is not already listed: click +, press Cmd-Shift-G, paste the path above, then Open. Turn its switch ON.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 6)
     }
 
     @ViewBuilder

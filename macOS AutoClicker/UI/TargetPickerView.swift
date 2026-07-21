@@ -24,6 +24,7 @@ struct TargetPickerView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .accessibilityIdentifier("targetPicker")
 
             switch selectedKind {
             case .iphoneMirroring:

@@ -10,6 +10,7 @@ import KeyboardShortcuts
 
 @main
 struct MacOSAutoClickerApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var appState = AppState()
 
     var body: some Scene {
@@ -70,5 +71,19 @@ struct MacOSAutoClickerApp: App {
         } else {
             NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
         }
+    }
+}
+
+private final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        guard ProcessInfo.processInfo.arguments.contains(where: { $0.hasPrefix("-uitest") }) else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        DispatchQueue.main.async {
+            NSApp.windows.first(where: { $0.canBecomeMain })?.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        true
     }
 }

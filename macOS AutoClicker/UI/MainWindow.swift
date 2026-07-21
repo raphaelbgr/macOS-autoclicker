@@ -21,13 +21,22 @@ struct MainWindow: View {
                 .frame(minWidth: 600, minHeight: 400)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityIdentifier("mainWindow")
+        // First-launch permission onboarding. Rendered as an in-tree overlay
+        // (NOT a `.sheet`) because the sheet presentation path is unreliable
+        // under XCUITest — the host window may not composite, leaving the
+        // sheet (and its buttons) inaccessible. Embedding onboarding in the
+        // window's own view tree guarantees XCUITest can see both the window
+        // and the onboarding controls.
+        .overlay {
+            if showOnboarding {
+                onboardingOverlay
+            }
+        }
         .onAppear {
             if !UserDefaults.standard.bool(forKey: "hasCompletedPermissionOnboarding") {
                 showOnboarding = true
             }
-        }
-        .sheet(isPresented: $showOnboarding) {
-            PermissionOnboardingSheet(appState: appState, isPresented: $showOnboarding)
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -37,7 +46,24 @@ struct MainWindow: View {
                     Label("Add Action", systemImage: "plus.circle")
                 }
                 .disabled(appState.selectedProjectName == nil)
+                .accessibilityIdentifier("addActionButton")
             }
+        }
+    }
+
+    // MARK: - Onboarding overlay
+
+    /// Dimming layer + onboarding card, layered over the main HSplitView.
+    /// Part of the window's own view tree (not a sheet) so it renders
+    /// deterministically under XCUITest.
+    @ViewBuilder
+    private var onboardingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                .contentShape(Rectangle())
+            PermissionOnboardingSheet(appState: appState, isPresented: $showOnboarding)
+                .frame(maxWidth: 480)
         }
     }
 
@@ -106,6 +132,7 @@ struct MainWindow: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 6)
+        .accessibilityIdentifier("sidebarProjectRow")
     }
 
     // MARK: - Detail
@@ -147,6 +174,7 @@ struct MainWindow: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(name)
                         .font(.title2.bold())
+                        .accessibilityIdentifier("headerProjectTitle")
                     TargetPickerView(appState: appState)
                 }
                 Spacer()
@@ -173,6 +201,7 @@ struct MainWindow: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(appState.automationRunning ? .red : .green)
+            .accessibilityIdentifier("startStopButton")
 
             Button {
                 appState.presentAddAction()
@@ -180,6 +209,7 @@ struct MainWindow: View {
                 Label("Add Action", systemImage: "plus")
             }
             .buttonStyle(.bordered)
+            .accessibilityIdentifier("addActionButton")
 
             Spacer()
 

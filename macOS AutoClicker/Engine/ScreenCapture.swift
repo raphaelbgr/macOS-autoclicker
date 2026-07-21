@@ -42,24 +42,11 @@ enum ScreenCapture {
 
     /// True if this process can see other apps' windows (TCC Screen Recording).
     static var hasScreenRecordingPermission: Bool {
-        // The ScreenCaptureKit path requires permission too; if CGWindowList
-        // returns a non-nil image for an arbitrary window, we have it.
-        guard let list = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly], kCGNullWindowID
-        ) as? [[String: Any]] else { return false }
-        for w in list {
-            let wid = (w[kCGWindowNumber as String] as? Int) ?? 0
-            if wid > 0 {
-                let image = CGWindowListCreateImage(
-                    .null,
-                    [.optionIncludingWindow],
-                    CGWindowID(wid),
-                    [.boundsIgnoreFraming]
-                )
-                return image != nil
-            }
-        }
-        return false
+        // Non-prompting status check. CGPreflightScreenCaptureAccess reports
+        // whether Screen Recording is granted WITHOUT capturing or triggering
+        // the system prompt. (The old CGWindowListCreateImage probe re-fired the
+        // "wants to record your screen" dialog on every call under macOS 14+.)
+        CGPreflightScreenCaptureAccess()
     }
 
     // MARK: - Window enumeration

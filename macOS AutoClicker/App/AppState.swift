@@ -42,6 +42,7 @@ final class AppState: ObservableObject {
     let logger = AppLogger()
 
     init() {
+        UITestLaunchHooks.handleLaunchArguments()
         loadProjectList()
         if projects.isEmpty {
             // Seed a default project so the UI has something to show.
@@ -254,5 +255,44 @@ final class AppState: ObservableObject {
             out[i] = cg
         }
         return out
+    }
+}
+
+/// Launch-argument hooks consumed by the XCUITest target. Outside the test
+/// runner these arguments are never present, so this is a no-op in production.
+enum UITestLaunchHooks {
+    static func handleLaunchArguments() {
+        let args = ProcessInfo.processInfo.arguments
+        // -uitest-onboarding-test: used only by the onboarding UI test. Resets
+        // persistence and leaves the onboarding flag UNSET so the overlay renders,
+        // even when -uitest-skip-onboarding is also present. The onboarding test's
+        // exact launch-argument set was tuned empirically for reliable window
+        // creation under XCUITest.
+        let isOnboardingTest = args.contains("-uitest-onboarding-test")
+        if args.contains("-uitest-reset") || isOnboardingTest {
+            wipePersistence()
+        }
+        // Apply AFTER the wipe so the flag survives a reset.
+        if args.contains("-uitest-skip-onboarding") && !isOnboardingTest {
+            UserDefaults.standard.set(true, forKey: "hasCompletedPermissionOnboarding")
+        }
+    }
+
+    private static func wipePersistence() {
+        // Remove only app-level keys, not the entire UserDefaults domain.
+        // This preserves NSWindow frame/restoration keys that SwiftUI's
+        // WindowGroup relies on for reliable window creation.
+        let defaults = UserDefaults.standard
+        let appKeys = [
+            "hasCompletedPermissionOnboarding"
+        ]
+        for key in appKeys {
+            defaults.removeObject(forKey: key)
+        }
+        let fm = FileManager.default
+        if let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let root = base.appendingPathComponent("macOS-autoclicker", isDirectory: true)
+            try? fm.removeItem(at: root)
+        }
     }
 }
