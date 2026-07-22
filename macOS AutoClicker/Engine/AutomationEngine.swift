@@ -95,12 +95,25 @@ actor AutomationEngine {
 
     // MARK: - Lifecycle
 
+    /// Monotonic run counter. Every start bumps it; a loop's terminal
+    /// emissions are suppressed unless it is still the CURRENT generation, so
+    /// a superseded run can never flip the UI of the run that replaced it.
+    private var generation = 0
+
     func start(_ inputs: EngineInputs) {
-        if task != nil { stop() }
+        if task != nil {
+            // Silently retire the old run — no .finished emission here; the
+            // generation guard keeps its exit events from reaching the UI.
+            cancellation.cancel()
+            task?.cancel()
+            task = nil
+        }
+        generation += 1
+        let gen = generation
         cancellation.reset()
         currentInputs = inputs
         task = Task { [weak self] in
-            await self?.runLoop(inputs: inputs)
+            await self?.runLoop(inputs: inputs, generation: gen)
         }
     }
 
@@ -108,6 +121,8 @@ actor AutomationEngine {
         cancellation.cancel()
         task?.cancel()
         task = nil
+        // The loop's own exit path emits .finished for the current
+        // generation; emit here too in case the loop is wedged mid-await.
         emit(.finished(.userStopped))
     }
 
@@ -115,10 +130,12 @@ actor AutomationEngine {
 
     // MARK: - Loop
 
-    private func runLoop(inputs: EngineInputs) async {
+    private func runLoop(inputs: EngineInputs, generation: Int) async {
         guard let resolvedWindow = resolveTargetWindow(inputs: inputs) else {
-            emit(.status("⚠️ Target window not found"))
-            emit(.finished(.error("Target window not found")))
+            if generation == self.generation {
+                emit(.status("⚠️ Target window not found"))
+                emit(.finished(.error("Target window not found")))
+            }
             return
         }
 
@@ -226,8 +243,12 @@ actor AutomationEngine {
             }
         }
 
-        emit(.log(LogEntry("Stopped automation", category: .timelineStop)))
-        emit(.finished(.userStopped))
+        // Only the CURRENT run may announce a stop — a run superseded by a
+        // newer start exits silently so it can't flip the new run's UI state.
+        if generation == self.generation {
+            emit(.log(LogEntry("Stopped automation", category: .timelineStop)))
+            emit(.finished(.userStopped))
+        }
         continuationBox.finish()
     }
 

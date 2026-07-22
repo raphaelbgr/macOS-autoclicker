@@ -84,6 +84,10 @@ final class AppState: ObservableObject {
     }
 
     func selectProject(_ name: String) {
+        // Switching projects while running must stop the engine — otherwise
+        // the old project's loop keeps firing clicks while the UI shows the
+        // new project.
+        if automationRunning { stopAutomation() }
         selectedProjectName = name
         let p = Project(name: name)
         settings = p.loadSettings()
