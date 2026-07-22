@@ -160,6 +160,15 @@ struct ActionEditorSheet: View {
             .padding(12)
         }
         .frame(width: 620, height: 660)
+        .onAppear(perform: loadExistingReference)
+    }
+
+    /// When editing an existing action, load its reference screenshot from disk
+    /// so the picker shows it instead of the empty "No reference yet" box.
+    private func loadExistingReference() {
+        guard capturedImage == nil, !action.screenshotPath.isEmpty,
+              let name = appState.selectedProjectName else { return }
+        capturedImage = Project(name: name).loadActionScreenshot(pathOrName: action.screenshotPath)
     }
 
     private func save() {
