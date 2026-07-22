@@ -41,14 +41,13 @@ struct TimelineView: View {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
-                Button {
-                    withAnimation(.easeInOut) { sortByActivity.toggle() }
-                } label: {
-                    Label("Sort by activity", systemImage: sortByActivity ? "bolt.fill" : "bolt")
+                Toggle(isOn: $sortByActivity.animation(.easeInOut(duration: 0.35))) {
+                    Label("Sort by activity", systemImage: "bolt.fill")
                 }
-                .buttonStyle(.borderless)
-                .help("Float the most recently matched action to the top")
-                .accessibilityIdentifier("sortByActivityButton")
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .help("Float the most recently matched action to the top as it fires")
+                .accessibilityIdentifier("sortByActivitySwitch")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
