@@ -84,6 +84,16 @@ struct PermissionOnboardingSheet: View {
         .glassCard()
         .background(.background)
         .onAppear { probePermissions() }
+        // Re-check when the user returns from System Settings, so a grant
+        // registers immediately instead of showing a stale status.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            probePermissions()
+        }
+        // Light poll while onboarding is visible — Accessibility (AXIsProcessTrusted)
+        // updates live, so this flips the row to Granted seconds after the toggle.
+        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
+            probePermissions()
+        }
     }
 
     private var allGranted: Bool {
@@ -96,11 +106,23 @@ struct PermissionOnboardingSheet: View {
     private func probePermissions() {
         DispatchQueue.global(qos: .userInitiated).async {
             let sr = ScreenCapture.hasScreenRecordingPermission
-            let ax = ClickExecutor.hasPostEventPermission
+            let ax = ClickExecutor.hasAccessibilityPermission
             DispatchQueue.main.async {
                 screenRecordingGranted = sr
                 accessibilityGranted = ax
             }
+        }
+    }
+
+    /// Quit and relaunch. Screen Recording (and a stale grant after an app
+    /// update) only take effect on a fresh launch, so this opens a new instance
+    /// and terminates the current one.
+    private func relaunchApp() {
+        let url = Bundle.main.bundleURL
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
         }
     }
 
@@ -205,13 +227,21 @@ struct PermissionOnboardingSheet: View {
                 .foregroundStyle(DesignTokens.Status.warning)
                 .frame(width: 20)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Switched on but still blocked?")
                     .font(.callout.weight(.semibold))
-                Text("This can happen after the app updates. In System Settings, turn the permission OFF and back ON — macOS only re-applies it to the current version once you re-authorize it.")
+                Text("Screen Recording only takes effect after a restart, and a grant can go stale after the app updates. Quit and reopen — or in System Settings toggle the permission OFF and back ON to re-authorize it.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                Button {
+                    relaunchApp()
+                } label: {
+                    Label("Quit & Reopen", systemImage: "arrow.clockwise")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .accessibilityIdentifier("onboardingQuitReopenButton")
             }
         }
         .padding(12)

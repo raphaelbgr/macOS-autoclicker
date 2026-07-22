@@ -26,6 +26,15 @@ final class ClickExecutor: @unchecked Sendable {
         return CGPreflightPostEventAccess()
     }
 
+    /// Whether the process is trusted for Accessibility. This reflects the exact
+    /// toggle the user flips in System Settings → Privacy & Security → Accessibility
+    /// and updates live within the running process — unlike the event-posting
+    /// preflight, which can lag a fresh grant until relaunch. Used by the
+    /// onboarding so the status matches what the user actually granted.
+    static var hasAccessibilityPermission: Bool {
+        return AXIsProcessTrusted()
+    }
+
     @discardableResult
     static func requestPostEventPermission() -> Bool {
         // Triggers the macOS Accessibility prompt if not yet granted.
