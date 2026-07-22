@@ -77,18 +77,16 @@ struct ActionEditorSheet: View {
 
                 if action.triggerType == .recognition {
                     Section("Reference screenshot") {
-                        HStack {
-                            if let capturedImage {
-                                PositionPickerView(image: capturedImage, x: $action.x, y: $action.y)
-                                    .frame(maxHeight: 160)
-                            } else {
-                                ContentUnavailableBox(
-                                    icon: "photo",
-                                    title: "No reference yet",
-                                    message: "Capture one to enable visual matching"
-                                )
-                                .frame(maxWidth: .infinity, minHeight: 120)
-                            }
+                        if let capturedImage {
+                            PositionPickerView(image: capturedImage, x: $action.x, y: $action.y)
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            ContentUnavailableBox(
+                                icon: "photo",
+                                title: "No reference yet",
+                                message: "Capture one to enable visual matching"
+                            )
+                            .frame(maxWidth: .infinity, minHeight: 220)
                         }
 
                         Button {
@@ -159,7 +157,7 @@ struct ActionEditorSheet: View {
             }
             .padding(12)
         }
-        .frame(width: 620, height: 660)
+        .frame(width: 680, height: 780)
         .onAppear(perform: loadExistingReference)
     }
 

@@ -47,7 +47,7 @@ struct PositionPickerView: View {
             }
         }
         .aspectRatio(image.size.width / image.size.height, contentMode: .fit)
-        .frame(maxHeight: 280)
+        .frame(maxHeight: 440)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
     }
 
