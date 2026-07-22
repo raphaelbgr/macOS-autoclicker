@@ -21,6 +21,7 @@ struct ActionEditorSheet: View {
     @State private var action: ClickAction
     @State private var capturedImage: NSImage?
     @State private var isCapturing = false
+    @State private var captureError: String?
 
     init(appState: AppState, isPresented: Binding<Bool>, editIndex: Int?, seed: ClickAction? = nil) {
         self.appState = appState
@@ -43,6 +44,10 @@ struct ActionEditorSheet: View {
             Divider()
 
             Form {
+                Section("Name") {
+                    TextField("Label", text: $action.label, prompt: Text("Optional name"))
+                }
+
                 Section("Trigger") {
                     Picker("Type", selection: $action.triggerType) {
                         Text("When screen matches").tag(TriggerType.recognition)
@@ -96,6 +101,13 @@ struct ActionEditorSheet: View {
                         }
                         .disabled(isCapturing || appState.settings.target == .iphoneMirroring && !ScreenCapture.hasScreenRecordingPermission)
 
+                        if let captureError {
+                            Label(captureError, systemImage: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                                .foregroundStyle(DesignTokens.Status.warning)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
                         LabeledContent("OCR text (comma = OR)") {
                             TextField("Victory, Game Over", text: $action.matchTexts)
                                 .frame(maxWidth: 240)
@@ -136,10 +148,6 @@ struct ActionEditorSheet: View {
                         }
                     }
                 }
-
-                Section {
-                    TextField("Label", text: $action.label, prompt: Text("Optional name"))
-                }
             }
             .formStyle(.grouped)
             .scrollContentBackground(.hidden)
@@ -161,6 +169,18 @@ struct ActionEditorSheet: View {
         .onAppear(perform: loadExistingReference)
     }
 
+    /// Human-readable reason capture couldn't find a window, based on the target.
+    private func captureTargetHint() -> String {
+        switch appState.settings.target {
+        case .iphoneMirroring:
+            return "Open the iPhone Mirroring app with your device screen showing, then Capture again."
+        case .window:
+            return "The target window isn't open. Bring the target app to a visible window, then Capture again."
+        case .region, .fullScreen:
+            return "Capture Now works with Window or iPhone Mirroring targets. Set the target to a window to capture a reference."
+        }
+    }
+
     /// When editing an existing action, load its reference screenshot from disk
     /// so the picker shows it instead of the empty "No reference yet" box.
     private func loadExistingReference() {
@@ -180,14 +200,17 @@ struct ActionEditorSheet: View {
 
     private func captureReference() async {
         isCapturing = true
+        captureError = nil
         defer { isCapturing = false }
 
         guard let window = ScreenCapture.resolveWindow(for: appState.settings.target) else {
             NSSound.beep()
+            captureError = captureTargetHint()
             return
         }
         guard let cg = ScreenCapture.captureWindow(window) else {
             NSSound.beep()
+            captureError = "Capture failed. Confirm Screen Recording is granted for this app, then try again."
             return
         }
         let ns = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
