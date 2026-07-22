@@ -20,9 +20,11 @@ struct ProjectSettings: Codable, Hashable, Sendable {
     var backgroundClick: Bool = false
     /// What this project targets. Replaces the old `target_app` string.
     var target: TargetSpec = .iphoneMirroring
-    /// Visual match method. featurePrint is the default (semantic, robust);
-    /// SSIM is the pixel-exact option from the Python app.
-    var matchMethod: MatchMethod = .featurePrint
+    /// Visual match method. SSIM is the default — it's the pixel-exact algorithm
+    /// the Python app used (scikit-image structural_similarity), so imported
+    /// projects and their 0.85 thresholds behave the same. featurePrint (Vision
+    /// semantic embedding) is the optional, shift-tolerant alternative.
+    var matchMethod: MatchMethod = .ssim
 
     /// Compatibility bridge: the old Python app wrote `target_app` as a
     /// composite `"windowID::owner::windowName"` string. We translate it
@@ -43,7 +45,7 @@ struct ProjectSettings: Codable, Hashable, Sendable {
         monitorIntervalMs: Int = 500,
         backgroundClick: Bool = false,
         target: TargetSpec = .iphoneMirroring,
-        matchMethod: MatchMethod = .featurePrint
+        matchMethod: MatchMethod = .ssim
     ) {
         self.threshold = threshold
         self.monitorIntervalMs = monitorIntervalMs
@@ -57,7 +59,7 @@ struct ProjectSettings: Codable, Hashable, Sendable {
         threshold = try c.decodeIfPresent(Double.self, forKey: .threshold) ?? 0.85
         monitorIntervalMs = try c.decodeIfPresent(Int.self, forKey: .monitorIntervalMs) ?? 500
         backgroundClick = try c.decodeIfPresent(Bool.self, forKey: .backgroundClick) ?? false
-        matchMethod = try c.decodeIfPresent(MatchMethod.self, forKey: .matchMethod) ?? .featurePrint
+        matchMethod = try c.decodeIfPresent(MatchMethod.self, forKey: .matchMethod) ?? .ssim
 
         if let typed = try c.decodeIfPresent(TargetSpec.self, forKey: .target) {
             target = typed
