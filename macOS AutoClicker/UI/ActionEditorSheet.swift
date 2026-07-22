@@ -76,6 +76,31 @@ struct ActionEditorSheet: View {
         _action = State(initialValue: seed ?? ClickAction())
     }
 
+    /// Whether this action lands somewhere on screen — i.e. its (x, y) matters,
+    /// so the image-based position picker should be available.
+    private var needsPosition: Bool {
+        action.actionType == .click
+            || (action.actionType == .openApp && action.openMethod == .tapIcon)
+    }
+
+    /// Timeline actions this one may follow (everything except itself),
+    /// labeled for the After-action picker.
+    private var otherActions: [(index: Int, title: String)] {
+        appState.timeline.actions.enumerated().compactMap { i, a in
+            guard i != editIndex else { return nil }
+            return (index: i, title: a.label.isEmpty ? "Action \(i + 1)" : a.label)
+        }
+    }
+
+    /// Keep afterIndex pointing at a real, non-self action so the picker never
+    /// shows an empty selection.
+    private func clampAfterIndex() {
+        let valid = Set(otherActions.map { $0.index + 1 })
+        if !valid.contains(action.afterIndex), let first = otherActions.first {
+            action.afterIndex = first.index + 1
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -139,10 +164,24 @@ struct ActionEditorSheet: View {
                     }
 
                     if action.triggerType == .afterTrigger {
-                        Stepper("After action #\(action.afterIndex)", value: $action.afterIndex, in: 1...999)
-                            .help("Which earlier action this one waits for (by its position in the timeline) before firing")
+                        if otherActions.isEmpty {
+                            Text("No other actions in the timeline yet — add the action this one should follow first.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .help("An “After another action” trigger needs at least one other action to follow")
+                        } else {
+                            Picker("After action", selection: $action.afterIndex) {
+                                ForEach(otherActions, id: \.index) { item in
+                                    Text("#\(item.index + 1) — \(item.title)").tag(item.index + 1)
+                                }
+                            }
+                            .help("The action this one follows: when that action fires, this one runs after its own delay")
+                            .accessibilityIdentifier("afterActionPicker")
+                            .onAppear(perform: clampAfterIndex)
+                        }
                     }
 
+                    if action.triggerType == .recognition {
                     LabeledContent("Threshold") {
                         HStack {
                             Slider(value: $action.threshold, in: 0...1, step: 0.05)
@@ -156,6 +195,7 @@ struct ActionEditorSheet: View {
                         }
                     }
                     .help("How closely the live screen must resemble the reference screenshot before this action fires")
+                    }
 
                     LabeledContent("Delay before click") {
                         Stepper(value: $action.delayMs, in: 0...60_000, step: 100) {
@@ -166,17 +206,23 @@ struct ActionEditorSheet: View {
                     .help("Wait this many milliseconds after a match before the click is sent — useful when a UI element needs time to become tappable")
                 }
 
-                if action.triggerType == .recognition {
-                    Section("Reference screenshot") {
+                // Shown whenever the action needs a reference image: for
+                // matching (recognition trigger, any action kind) and/or for
+                // aiming the click position on a screenshot (any positional
+                // gesture, including after-trigger ones and Open-app tap-icon).
+                if action.triggerType == .recognition || needsPosition {
+                    Section(action.triggerType == .recognition ? "Reference screenshot" : "Click position") {
                         if let capturedImage {
                             PositionPickerView(image: capturedImage, x: $action.x, y: $action.y)
                                 .frame(maxWidth: .infinity)
-                                .help("Click anywhere on this image to set the click target — the crosshair marks the current position")
+                                .help("Click anywhere on this image to set the click target — the reticle marks the current position")
                         } else {
                             ContentUnavailableBox(
                                 icon: "photo",
                                 title: "No reference yet",
-                                message: "Capture one to enable visual matching"
+                                message: action.triggerType == .recognition
+                                    ? "Capture one to enable visual matching"
+                                    : "Capture one to aim the click position on a screenshot"
                             )
                             .frame(maxWidth: .infinity, minHeight: 220)
                         }
@@ -187,7 +233,7 @@ struct ActionEditorSheet: View {
                             Label(isCapturing ? "Capturing…" : "Capture Now", systemImage: "camera.viewfinder")
                         }
                         .disabled(isCapturing || !ScreenCapture.hasScreenRecordingPermission)
-                        .help("Grab a fresh screenshot of the current target to use as the visual match reference; requires Screen Recording permission")
+                        .help("Grab a fresh screenshot of the current target — used as the visual match reference and to aim the click; requires Screen Recording permission")
 
                         if let captureError {
                             Label(captureError, systemImage: "exclamationmark.triangle.fill")
@@ -197,16 +243,18 @@ struct ActionEditorSheet: View {
                                 .help("The last capture attempt failed — follow the message, then try Capture Now again")
                         }
 
-                        LabeledContent("When text detected (OCR)") {
-                            TextField("eg: Game Over, Next", text: $action.matchTexts)
-                                .frame(maxWidth: 240)
-                                .accessibilityIdentifier("ocrTextField")
-                                .help("Comma-separated words/phrases; the action also fires when on-screen OCR reads any of them")
+                        if action.triggerType == .recognition {
+                            LabeledContent("When text detected (OCR)") {
+                                TextField("eg: Game Over, Next", text: $action.matchTexts)
+                                    .frame(maxWidth: 240)
+                                    .accessibilityIdentifier("ocrTextField")
+                                    .help("Comma-separated words/phrases; the action also fires when on-screen OCR reads any of them")
+                            }
+                            Text("Fires when any of these texts is read on screen. Separate alternatives with commas.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .help("OCR runs every monitor cycle; listing several alternatives lets one action cover a few wordings")
                         }
-                        Text("Fires when any of these texts is read on screen. Separate alternatives with commas.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .help("OCR runs every monitor cycle; listing several alternatives lets one action cover a few wordings")
                     }
                 }
 
@@ -276,8 +324,23 @@ struct ActionEditorSheet: View {
                             Text("Tap icon (x, y)").tag(OpenMethod.tapIcon)
                         }
                         .help("Spotlight types the app name into iOS search and presses return; Tap icon taps at this action’s Position")
-                        TextField("App name", text: $action.appName)
-                            .help("Exact app name to type into iOS Spotlight (used only with the Spotlight method)")
+                        if action.openMethod == .spotlight {
+                            TextField("App name", text: $action.appName)
+                                .help("Exact app name to type into iOS Spotlight (used only with the Spotlight method)")
+                        }
+                        if action.openMethod == .tapIcon {
+                            LabeledContent("Tap position") {
+                                HStack {
+                                    TextField("X", value: $action.x, format: .number.grouping(.never))
+                                        .frame(width: 60)
+                                        .help("Horizontal pixel coordinate of the icon to tap, from the target’s top-left corner")
+                                    TextField("Y", value: $action.y, format: .number.grouping(.never))
+                                        .frame(width: 60)
+                                        .help("Vertical pixel coordinate of the icon to tap, from the target’s top-left corner")
+                                }
+                            }
+                            .help("Where the icon tap lands — aim it on the reference image above or type exact pixels")
+                        }
                     }
                 }
             }

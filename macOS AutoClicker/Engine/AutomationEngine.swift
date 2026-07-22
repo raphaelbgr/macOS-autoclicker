@@ -192,6 +192,32 @@ actor AutomationEngine {
                 }
                 await executeAction(action, inputs: inputs, window: resolvedWindow, reason: bestReason)
                 emit(.actionFired(index: idx, reason: bestReason))
+
+                // 4b. Chained actions: any enabled after_trigger action whose
+                // afterIndex (1-based) points at an action that just fired runs
+                // next, honoring its own delayMs. Chains cascade; the fired set
+                // guards against cycles.
+                var firedIndices: Set<Int> = [idx]
+                var chainQueue: [Int] = [idx]
+                while let parent = chainQueue.first {
+                    chainQueue.removeFirst()
+                    for (j, follower) in actions.enumerated()
+                    where follower.enabled
+                        && follower.triggerType == .afterTrigger
+                        && follower.afterIndex == parent + 1
+                        && !firedIndices.contains(j) {
+                        if Task.isCancelled || cancellation.isCancelled { break }
+                        if follower.delayMs > 0 {
+                            try? await sleepInterruptible(TimeInterval(follower.delayMs) / 1000.0)
+                            if Task.isCancelled || cancellation.isCancelled { break }
+                        }
+                        await executeAction(follower, inputs: inputs, window: resolvedWindow, reason: "After action #\(parent + 1)")
+                        emit(.actionFired(index: j, reason: "After action #\(parent + 1)"))
+                        firedIndices.insert(j)
+                        chainQueue.append(j)
+                    }
+                }
+
                 // 1s cooldown (matches Python loop).
                 try? await sleepInterruptible(1.0)
             } else {
