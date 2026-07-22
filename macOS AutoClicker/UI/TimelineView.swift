@@ -12,8 +12,13 @@ import AppKit
 
 struct TimelineView: View {
     @ObservedObject var appState: AppState
-    @State private var editingIndex: Int?
-    @State private var showEditor = false
+    @State private var editTarget: EditTarget?
+
+    /// Identifiable wrapper so the editor is presented via `.sheet(item:)` —
+    /// that rebuilds the sheet (and re-seeds its @State) for the exact action
+    /// each time. `.sheet(isPresented:)` captured a stale/nil seed, so the
+    /// editor opened blank when editing an existing action.
+    private struct EditTarget: Identifiable { let id: Int }
 
     var body: some View {
         List {
@@ -47,12 +52,16 @@ struct TimelineView: View {
                 }
             }
         }
-        .sheet(isPresented: $showEditor) {
+        .sheet(item: $editTarget) { target in
             ActionEditorSheet(
                 appState: appState,
-                isPresented: $showEditor,
-                editIndex: editingIndex,
-                seed: editingIndex.map { appState.timeline.actions[$0] }
+                isPresented: Binding(
+                    get: { editTarget != nil },
+                    set: { if !$0 { editTarget = nil } }
+                ),
+                editIndex: target.id,
+                seed: appState.timeline.actions.indices.contains(target.id)
+                    ? appState.timeline.actions[target.id] : nil
             )
         }
     }
@@ -88,8 +97,7 @@ struct TimelineView: View {
                 .lineLimit(1)
 
             Button {
-                editingIndex = idx
-                showEditor = true
+                editTarget = EditTarget(id: idx)
             } label: {
                 Image(systemName: "square.and.pencil")
             }
@@ -105,8 +113,7 @@ struct TimelineView: View {
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
-            editingIndex = idx
-            showEditor = true
+            editTarget = EditTarget(id: idx)
         }
         .help("Double-click or use the pencil to edit")
     }
@@ -175,10 +182,5 @@ struct TimelineView: View {
                 appState.updateAction(at: idx, with: a)
             }
         )
-    }
-
-    func addNew() {
-        editingIndex = nil
-        showEditor = true
     }
 }
