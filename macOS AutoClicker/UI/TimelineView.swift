@@ -13,6 +13,23 @@ import AppKit
 struct TimelineView: View {
     @ObservedObject var appState: AppState
     @State private var editTarget: EditTarget?
+    @State private var sortByActivity = false
+
+    /// Actions in display order. When "Sort by activity" is on, the most
+    /// recently matched actions float to the top (by AppState.activityOrder);
+    /// everything else keeps its natural order. `offset` is the real timeline
+    /// index (used for editing/deleting/scores).
+    private var displayedActions: [(offset: Int, element: ClickAction)] {
+        let base = appState.timeline.actions.enumerated().map { (offset: $0.offset, element: $0.element) }
+        guard sortByActivity else { return base }
+        let rank = Dictionary(uniqueKeysWithValues:
+            appState.activityOrder.enumerated().map { ($0.element, $0.offset) })
+        return base.sorted { a, b in
+            let ra = rank[a.element.id] ?? Int.max
+            let rb = rank[b.element.id] ?? Int.max
+            return ra != rb ? ra < rb : a.offset < b.offset
+        }
+    }
 
     /// Identifiable wrapper so the editor is presented via `.sheet(item:)` —
     /// that rebuilds the sheet (and re-seeds its @State) for the exact action
@@ -21,17 +38,41 @@ struct TimelineView: View {
     private struct EditTarget: Identifiable { let id: Int }
 
     var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button {
+                    withAnimation(.easeInOut) { sortByActivity.toggle() }
+                } label: {
+                    Label("Sort by activity", systemImage: sortByActivity ? "bolt.fill" : "bolt")
+                }
+                .buttonStyle(.borderless)
+                .help("Float the most recently matched action to the top")
+                .accessibilityIdentifier("sortByActivityButton")
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+
+            Divider()
+
+            list
+        }
+    }
+
+    private var list: some View {
         List {
-            ForEach(Array(appState.timeline.actions.enumerated()), id: \.element.id) { idx, action in
-                actionRow(idx: idx, action: action)
-                    .tag(idx)
+            ForEach(displayedActions, id: \.element.id) { item in
+                actionRow(idx: item.offset, action: item.element)
+                    .tag(item.offset)
             }
             .onDelete { offsets in
-                for i in offsets.sorted(by: >) {
+                let real = offsets.map { displayedActions[$0].offset }
+                for i in real.sorted(by: >) {
                     appState.removeAction(at: i)
                 }
             }
         }
+        .animation(.easeInOut(duration: 0.35), value: appState.activityOrder)
         .listStyle(.inset(alternatesRowBackgrounds: true))
         .overlay {
             if appState.timeline.actions.isEmpty {
@@ -111,6 +152,11 @@ struct TimelineView: View {
                 .labelsHidden()
         }
         .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.accentColor.opacity(appState.justFiredID == action.id ? 0.28 : 0))
+                .animation(.easeInOut(duration: 0.5), value: appState.justFiredID)
+        )
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
             editTarget = EditTarget(id: idx)

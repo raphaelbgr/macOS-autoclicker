@@ -27,6 +27,11 @@ final class AppState: ObservableObject {
     @Published var similarities: [Int: Double] = [:]
     /// Index that just fired (for UI highlight).
     @Published var lastFiredIndex: Int?
+    /// Action ids in most-recently-fired order (front = most recent). Drives
+    /// the optional "Sort by activity" ordering in the timeline.
+    @Published var activityOrder: [UUID] = []
+    /// The action id that just fired, for a brief fade highlight; cleared ~1s later.
+    @Published var justFiredID: UUID?
     @Published var status: String = "Idle"
 
     // MARK: - Engine
@@ -230,6 +235,16 @@ final class AppState: ObservableObject {
             status = s
         case .actionFired(let index, let reason):
             lastFiredIndex = index
+            if timeline.actions.indices.contains(index) {
+                let id = timeline.actions[index].id
+                activityOrder.removeAll { $0 == id }
+                activityOrder.insert(id, at: 0)
+                justFiredID = id
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    if self?.justFiredID == id { self?.justFiredID = nil }
+                }
+            }
             logger.click("Action #\(index + 1)", details: reason)
         case .finished(let reason):
             automationRunning = false
