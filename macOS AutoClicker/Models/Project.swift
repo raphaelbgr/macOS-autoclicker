@@ -186,6 +186,26 @@ struct Project: Identifiable, Hashable, Sendable {
             try? FileManager.default.copyItem(at: srcRef, to: project.legacyReferencePath)
         }
 
+        // Self-containment: legacy timelines store screenshot_path as absolute
+        // paths into the source tree. Copy anything still missing into the
+        // project and rewrite every path to its basename so the import
+        // survives the source folder moving or being deleted.
+        if var timeline = project.loadTimeline() {
+            let fm = FileManager.default
+            for i in timeline.actions.indices {
+                let path = timeline.actions[i].screenshotPath
+                guard path.hasPrefix("/") else { continue }
+                let src = URL(fileURLWithPath: path)
+                let base = src.lastPathComponent
+                let dst = project.screenshotsDir.appendingPathComponent(base)
+                if !fm.fileExists(atPath: dst.path), fm.fileExists(atPath: src.path) {
+                    try? fm.copyItem(at: src, to: dst)
+                }
+                timeline.actions[i].screenshotPath = base
+            }
+            try? project.saveTimeline(timeline)
+        }
+
         return project
     }
 
