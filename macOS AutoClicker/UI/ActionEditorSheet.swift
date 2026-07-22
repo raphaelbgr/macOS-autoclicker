@@ -99,7 +99,7 @@ struct ActionEditorSheet: View {
                         } label: {
                             Label(isCapturing ? "Capturing…" : "Capture Now", systemImage: "camera.viewfinder")
                         }
-                        .disabled(isCapturing || appState.settings.target == .iphoneMirroring && !ScreenCapture.hasScreenRecordingPermission)
+                        .disabled(isCapturing || !ScreenCapture.hasScreenRecordingPermission)
 
                         if let captureError {
                             Label(captureError, systemImage: "exclamationmark.triangle.fill")
@@ -177,7 +177,7 @@ struct ActionEditorSheet: View {
         case .window:
             return "The target window isn't open. Bring the target app to a visible window, then Capture again."
         case .region, .fullScreen:
-            return "Capture Now works with Window or iPhone Mirroring targets. Set the target to a window to capture a reference."
+            return "Capture failed for this target."
         }
     }
 
@@ -203,12 +203,20 @@ struct ActionEditorSheet: View {
         captureError = nil
         defer { isCapturing = false }
 
-        guard let window = ScreenCapture.resolveWindow(for: appState.settings.target) else {
+        let target = appState.settings.target
+        let window = ScreenCapture.resolveWindow(for: target)
+        // Window-based targets need a resolvable window; region/full-screen don't.
+        let needsWindow: Bool
+        switch target {
+        case .iphoneMirroring, .window: needsWindow = true
+        case .region, .fullScreen:      needsWindow = false
+        }
+        if needsWindow && window == nil {
             NSSound.beep()
             captureError = captureTargetHint()
             return
         }
-        guard let cg = ScreenCapture.captureWindow(window) else {
+        guard let cg = ScreenCapture.capture(for: target, resolvedWindow: window) else {
             NSSound.beep()
             captureError = "Capture failed. Confirm Screen Recording is granted for this app, then try again."
             return
