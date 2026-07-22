@@ -26,6 +26,8 @@ struct MacOSAutoClickerApp: App {
                 Button("New Project") { appState.newProject() }
                     .keyboardShortcut("n", modifiers: .command)
                 Button("Import Project…") { appState.importProject() }
+                Button("Export Project…") { appState.exportProject() }
+                    .disabled(appState.selectedProjectName == nil)
                 Divider()
                 Button("Close Window") { NSApp.keyWindow?.close() }
                     .keyboardShortcut("w", modifiers: .command)

@@ -12,6 +12,8 @@ struct MainWindow: View {
     @ObservedObject var appState: AppState
     @State private var showOnboarding = false
     @State private var showAdd = false
+    /// Project name pending deletion; non-nil presents the confirmation dialog.
+    @State private var pendingDelete: String?
 
     var body: some View {
         HSplitView {
@@ -165,7 +167,39 @@ struct MainWindow: View {
         .buttonStyle(.plain)
         .padding(.horizontal, 6)
         .accessibilityIdentifier("sidebarProjectRow")
-        .help("Open this project in the detail view")
+        .help("Open this project in the detail view — right-click for export/delete")
+        .contextMenu {
+            Button {
+                appState.selectProject(project.name)
+                appState.exportProject()
+            } label: {
+                Label("Export Project…", systemImage: "square.and.arrow.up")
+            }
+            Divider()
+            Button(role: .destructive) {
+                pendingDelete = project.name
+            } label: {
+                Label("Delete Project…", systemImage: "trash")
+            }
+        }
+        .confirmationDialog(
+            "Delete “\(pendingDelete ?? "")”?",
+            isPresented: Binding(
+                get: { pendingDelete != nil },
+                set: { if !$0 { pendingDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Delete Project", role: .destructive) {
+                if let name = pendingDelete {
+                    appState.deleteProject(name)
+                }
+                pendingDelete = nil
+            }
+            Button("Cancel", role: .cancel) { pendingDelete = nil }
+        } message: {
+            Text("This permanently removes the project, its actions, and its screenshots from this Mac. Export it first if you want a backup.")
+        }
     }
 
     // MARK: - Detail

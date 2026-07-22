@@ -188,6 +188,80 @@ struct Project: Identifiable, Hashable, Sendable {
 
         return project
     }
+
+    /// Import a BARE timeline JSON file (e.g. "Sky force reloaded clicks.json")
+    /// as a new project. The Python app sometimes saved standalone click files
+    /// whose screenshot_path entries are absolute paths into other folders —
+    /// each referenced screenshot is copied into the new project and the path
+    /// rewritten to its basename, so the imported project is self-contained.
+    static func importFrom(timelineFile: URL, as name: String? = nil) throws -> Project {
+        let data = try Data(contentsOf: timelineFile)
+        var timeline = try JSONDecoder().decode(Timeline.self, from: data)
+
+        let stem = timelineFile.deletingPathExtension().lastPathComponent
+        let projName = name ?? (timeline.name.isEmpty ? stem : timeline.name)
+        let project = Project(name: projName)
+        try project.ensureExists()
+
+        let fm = FileManager.default
+        for i in timeline.actions.indices {
+            let path = timeline.actions[i].screenshotPath
+            guard !path.isEmpty else { continue }
+            let src = path.hasPrefix("/")
+                ? URL(fileURLWithPath: path)
+                : timelineFile.deletingLastPathComponent().appendingPathComponent(path)
+            let base = src.lastPathComponent
+            if fm.fileExists(atPath: src.path) {
+                let dst = project.screenshotsDir.appendingPathComponent(base)
+                if !fm.fileExists(atPath: dst.path) {
+                    try? fm.copyItem(at: src, to: dst)
+                }
+                timeline.actions[i].screenshotPath = base
+            } else {
+                // Source image is gone; keep the basename so a later re-capture
+                // under the same name resolves, and matching just skips it.
+                timeline.actions[i].screenshotPath = base
+            }
+        }
+
+        timeline.name = projName
+        try project.saveTimeline(timeline)
+        if !project.hasSettings {
+            try project.saveSettings(ProjectSettings())
+        }
+        return project
+    }
+
+    /// Export this project as a self-contained folder (timeline.json +
+    /// settings.json + screenshots/), with screenshot paths rewritten to
+    /// basenames so the folder re-imports anywhere.
+    func exportTo(folder destination: URL) throws {
+        let fm = FileManager.default
+        try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+        let dstShots = destination.appendingPathComponent("screenshots", isDirectory: true)
+        try fm.createDirectory(at: dstShots, withIntermediateDirectories: true)
+
+        var timeline = loadTimeline() ?? Timeline(name: name)
+        for i in timeline.actions.indices {
+            let path = timeline.actions[i].screenshotPath
+            guard !path.isEmpty else { continue }
+            let src = path.hasPrefix("/")
+                ? URL(fileURLWithPath: path)
+                : screenshotsDir.appendingPathComponent(path)
+            let base = src.lastPathComponent
+            if fm.fileExists(atPath: src.path) {
+                let dst = dstShots.appendingPathComponent(base)
+                try? fm.removeItem(at: dst)
+                try? fm.copyItem(at: src, to: dst)
+            }
+            timeline.actions[i].screenshotPath = base
+        }
+
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try enc.encode(timeline).write(to: destination.appendingPathComponent("timeline.json"))
+        try enc.encode(loadSettings()).write(to: destination.appendingPathComponent("settings.json"))
+    }
 }
 
 enum ProjectError: LocalizedError {

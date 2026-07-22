@@ -10,6 +10,7 @@
 import Foundation
 import SwiftUI
 import KeyboardShortcuts
+import UniformTypeIdentifiers
 
 @MainActor
 final class AppState: ObservableObject {
@@ -117,24 +118,51 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Prompt user to pick a folder and import it as a new project.
-    /// Reads legacy Python projects (timeline.json + screenshots/) cleanly.
+    /// Prompt user to pick a project folder (timeline.json + screenshots/) OR
+    /// a bare timeline JSON file (the Python app also saved standalone
+    /// "<name> clicks.json" files) and import it as a new project.
     func importProject() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
-        panel.canChooseFiles = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
         panel.prompt = "Import"
-        panel.title = "Select a project folder containing timeline.json"
+        panel.title = "Select a project folder (timeline.json) or a timeline JSON file"
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        let name = url.lastPathComponent
         do {
-            _ = try Project.importFrom(folder: url, as: name)
+            let project: Project
+            if url.hasDirectoryPath {
+                project = try Project.importFrom(folder: url, as: url.lastPathComponent)
+            } else {
+                project = try Project.importFrom(timelineFile: url)
+            }
             loadProjectList()
-            selectProject(name)
-            logger.info("Imported project \"\(name)\"")
+            selectProject(project.name)
+            logger.info("Imported project \"\(project.name)\"")
         } catch {
+            status = "Import failed: \(error.localizedDescription)"
             logger.error("Import failed: \(error.localizedDescription)")
+        }
+    }
+
+    /// Export the selected project as a self-contained folder the user picks.
+    func exportProject() {
+        guard let name = selectedProjectName else { return }
+        let panel = NSSavePanel()
+        panel.title = "Export \(name)"
+        panel.prompt = "Export"
+        panel.nameFieldStringValue = name
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try Project(name: name).exportTo(folder: url)
+            logger.info("Exported project \"\(name)\" to \(url.path)")
+            status = "Exported to \(url.lastPathComponent)"
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } catch {
+            status = "Export failed: \(error.localizedDescription)"
+            logger.error("Export failed: \(error.localizedDescription)")
         }
     }
 
