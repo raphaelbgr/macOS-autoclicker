@@ -89,9 +89,11 @@ struct PermissionOnboardingSheet: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             probePermissions()
         }
-        // Light poll while onboarding is visible — Accessibility (AXIsProcessTrusted)
-        // updates live, so this flips the row to Granted seconds after the toggle.
-        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
+        // Poll the live permission state every 2s while onboarding is visible —
+        // Accessibility (AXIsProcessTrusted) updates live, so the row flips to
+        // Granted within ~2s of the toggle. probePermissions() re-queries the
+        // system on every call (no cached value).
+        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
             probePermissions()
         }
     }

@@ -37,6 +37,14 @@ struct MainWindow: View {
             if !UserDefaults.standard.bool(forKey: "hasCompletedPermissionOnboarding") {
                 showOnboarding = true
             }
+            refreshPermissionGate()
+        }
+        // Re-check the live permission state every 2s. If either required
+        // permission is missing, surface the onboarding dialog again — the app
+        // can't capture or click without them. Suppressed under UI tests so the
+        // deterministic launch-argument flow stays in control.
+        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
+            refreshPermissionGate()
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -47,6 +55,26 @@ struct MainWindow: View {
                 }
                 .disabled(appState.selectedProjectName == nil)
                 .accessibilityIdentifier("addActionButton")
+            }
+        }
+    }
+
+    /// True when launched by the XCUITest suite. The permission gate is
+    /// suppressed here so tests drive onboarding purely via launch arguments.
+    private var isUITest: Bool {
+        ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("-uitest") }
+    }
+
+    /// Query the live permission state off the main thread; if either required
+    /// permission is missing, show the onboarding dialog. Never hides it (the
+    /// user dismisses via Done/Skip once granted) and never runs under UI tests.
+    private func refreshPermissionGate() {
+        guard !isUITest else { return }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let granted = ScreenCapture.hasScreenRecordingPermission
+                && ClickExecutor.hasAccessibilityPermission
+            DispatchQueue.main.async {
+                if !granted { showOnboarding = true }
             }
         }
     }
