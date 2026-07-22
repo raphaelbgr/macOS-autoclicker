@@ -59,11 +59,6 @@ struct LivePreviewView: View {
     @ObservedObject var appState: AppState
     let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     @State private var previewImage: NSImage?
-    /// Image frame as actually displayed on screen (after aspect-fit). Used
-    /// to scale the fired-point from image-pixel coords into view coords.
-    @State private var displayedImageSize: CGSize = .zero
-    /// Fired click point scaled into the displayed image frame; nil = no ripple.
-    @State private var firedDisplayPoint: CGPoint?
     /// Re-creating the ripple view (via .id) on each fire re-runs its
     /// onAppear animation, giving us a one-shot ripple without timers.
     @State private var rippleID: UUID = UUID()
@@ -80,10 +75,19 @@ struct LivePreviewView: View {
                             .frame(width: fit.width, height: fit.height)
                             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
 
-                        // Fired-click ripple overlay. Sits on top of the
-                        // image, never intercepts hits.
-                        if let firedDisplayPoint {
-                            FiredRippleOverlay(point: firedDisplayPoint)
+                        // Fired-click marker, anchored ON the image at the
+                        // exact click spot. The mapping is computed live from
+                        // the current fit geometry (points → retina pixels →
+                        // displayed frame) so it can never use stale sizes.
+                        if let fired = appState.lastFiredPoint {
+                            let pointScale = NSScreen.main?.backingScaleFactor ?? 2.0
+                            let sx = fit.width / previewImage.size.width
+                            let sy = fit.height / previewImage.size.height
+                            let p = CGPoint(
+                                x: min(max(0, fired.x * pointScale * sx), fit.width),
+                                y: min(max(0, fired.y * pointScale * sy), fit.height)
+                            )
+                            FiredRippleOverlay(point: p)
                                 .id(rippleID)
                                 .allowsHitTesting(false)
                                 .accessibilityIdentifier("firedRipple")
@@ -100,8 +104,6 @@ struct LivePreviewView: View {
                         .allowsHitTesting(false)
                     }
                     .frame(width: fit.width, height: fit.height)
-                    .onAppear { displayedImageSize = fit }
-                    .onChange(of: fit) { newSize in displayedImageSize = newSize }
                 }
                 .aspectRatio(previewImage.size.width / previewImage.size.height, contentMode: .fit)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -124,18 +126,9 @@ struct LivePreviewView: View {
             capture()
         }
         .onChange(of: appState.lastFiredPoint) { new in
-            guard let point = new, let img = previewImage, displayedImageSize.width > 0 else { return }
-            // The fired point is in POINTS (CGEvent space); the capture is in
-            // retina PIXELS (typically 2x). Convert points → pixels with the
-            // screen's backing scale, then pixels → displayed frame.
-            let pointScale = NSScreen.main?.backingScaleFactor ?? 2.0
-            let scaleX = displayedImageSize.width  / img.size.width
-            let scaleY = displayedImageSize.height / img.size.height
-            firedDisplayPoint = CGPoint(
-                x: point.x * pointScale * scaleX,
-                y: point.y * pointScale * scaleY
-            )
-            rippleID = UUID()
+            // Re-create the ripple view on each fire so its one-shot
+            // animation replays; position is computed live in the body.
+            if new != nil { rippleID = UUID() }
         }
     }
 
@@ -211,7 +204,7 @@ private struct FiredRippleOverlay: View {
         ZStack {
             // Ring 1 — expands and fades over 0.9s.
             Circle()
-                .stroke(Color.accentColor, lineWidth: 2)
+                .stroke(Color.red, lineWidth: 2.5)
                 .frame(width: baseSize, height: baseSize)
                 .scaleEffect(ringScale)
                 .opacity(ringOpacity)
@@ -219,15 +212,17 @@ private struct FiredRippleOverlay: View {
             // Ring 2 — same shape, delayed 0.15s, slightly shorter so both
             // finish inside the ~0.9s total budget.
             Circle()
-                .stroke(Color.accentColor.opacity(0.6), lineWidth: 2)
+                .stroke(Color.red.opacity(0.6), lineWidth: 2.5)
                 .frame(width: baseSize, height: baseSize)
                 .scaleEffect(ring2Scale)
                 .opacity(ring2Opacity)
 
-            // Solid center dot marks the exact click point.
-            Circle()
-                .fill(Color.accentColor)
-                .frame(width: 8, height: 8)
+            // Precise reticle pinned at the exact click point for the whole
+            // marker lifetime (rings animate around it).
+            Image(systemName: "scope")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(.red)
+                .shadow(color: .white.opacity(0.9), radius: 1.5)
         }
         .position(x: point.x, y: point.y)
         .onAppear {
