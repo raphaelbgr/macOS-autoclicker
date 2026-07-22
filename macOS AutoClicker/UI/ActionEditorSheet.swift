@@ -22,6 +22,10 @@ struct ActionEditorSheet: View {
     @State private var capturedImage: NSImage?
     @State private var isCapturing = false
     @State private var captureError: String?
+    /// OCR strings recognized on `capturedImage`. Refilled on every fresh
+    /// capture and on initial load of an existing reference. Rendered as
+    /// tappable chips below the OCR TextField.
+    @State private var detectedTexts: [String] = []
 
     /// Gesture-first choices shown in the single Action picker. The first
     /// nine are plain mouse gestures (actionType == .click + a ClickType); the
@@ -254,6 +258,45 @@ struct ActionEditorSheet: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .help("OCR runs every monitor cycle; listing several alternatives lets one action cover a few wordings")
+
+                            // OCR suggestion chips: detected phrases that the
+                            // user can append with a click. The TextField above
+                            // stays fully editable — chips only insert text.
+                            if !detectedTexts.isEmpty {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Detected in reference — click to add:")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .help("Phrases Vision recognized on the reference screenshot; tap one to append it to the OCR field above")
+                                    LazyVGrid(
+                                        columns: [GridItem(.adaptive(minimum: 90), spacing: 6)],
+                                        alignment: .leading,
+                                        spacing: 6
+                                    ) {
+                                        ForEach(detectedTexts, id: \.self) { text in
+                                            Button {
+                                                addChip(text)
+                                            } label: {
+                                                Text(text)
+                                                    .font(.caption)
+                                                    .lineLimit(1)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 3)
+                                                    .background(
+                                                        Capsule().fill(Color.accentColor.opacity(0.15))
+                                                    )
+                                                    .overlay(
+                                                        Capsule().strokeBorder(Color.accentColor.opacity(0.5), lineWidth: 0.5)
+                                                    )
+                                                    .foregroundStyle(.primary)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .help("Append “\(text)” to the OCR match field")
+                                            .accessibilityIdentifier("ocrDetectedChip")
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -384,6 +427,50 @@ struct ActionEditorSheet: View {
         guard capturedImage == nil, !action.screenshotPath.isEmpty,
               let name = appState.selectedProjectName else { return }
         capturedImage = Project(name: name).loadActionScreenshot(pathOrName: action.screenshotPath)
+        runOCR()
+    }
+
+    /// Run Vision OCR on the current `capturedImage` off the main thread and
+    /// refill `detectedTexts`. Deduped, trimmed, capped at 12 entries so the
+    /// chip grid never overflows the sheet.
+    private func runOCR() {
+        guard let img = capturedImage,
+              let cg = img.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            detectedTexts = []
+            return
+        }
+        DispatchQueue.global(qos: .userInitiated).async {
+            let raw = OCRMatcher.recognizeText(in: cg)
+            var seen = Set<String>()
+            var cleaned: [String] = []
+            for candidate in raw {
+                let trimmed = candidate.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { continue }
+                let key = trimmed.lowercased()
+                if seen.insert(key).inserted {
+                    cleaned.append(trimmed)
+                }
+                if cleaned.count >= 12 { break }
+            }
+            DispatchQueue.main.async {
+                detectedTexts = cleaned
+            }
+        }
+    }
+
+    /// Append a detected-text chip to `action.matchTexts`. Skips if the same
+    /// phrase (case-insensitive) is already in the list. Comma-joins with a
+    /// leading space so the field stays human-readable.
+    private func addChip(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let existing = action.ocrPatterns.map { $0.lowercased() }
+        guard !existing.contains(trimmed.lowercased()) else { return }
+        if action.matchTexts.isEmpty {
+            action.matchTexts = trimmed
+        } else {
+            action.matchTexts += ", \(trimmed)"
+        }
     }
 
     private func save() {
@@ -420,6 +507,7 @@ struct ActionEditorSheet: View {
         }
         let ns = NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height))
         capturedImage = ns
+        runOCR()
 
         // Persist the screenshot to the project folder and store its relative path.
         if let name = appState.selectedProjectName {

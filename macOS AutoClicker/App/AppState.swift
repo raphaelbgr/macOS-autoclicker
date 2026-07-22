@@ -32,6 +32,14 @@ final class AppState: ObservableObject {
     @Published var activityOrder: [UUID] = []
     /// The action id that just fired, for a brief fade highlight; cleared ~1s later.
     @Published var justFiredID: UUID?
+    /// Last fired click point in the same coordinate space as the captured
+    /// frame (window-relative for window targets, absolute for full screen,
+    /// region-relative for region). Drives the ripple overlay in LivePreviewView.
+    /// Cleared ~1.2s after the most recent fire.
+    @Published var lastFiredPoint: CGPoint?
+    /// Label of the most recently fired action, shown under the live preview
+    /// alongside the ripple. Tracks `lastFiredPoint`'s lifetime.
+    @Published var lastFiredLabel: String = ""
     @Published var status: String = "Idle"
 
     // MARK: - Engine
@@ -41,6 +49,9 @@ final class AppState: ObservableObject {
 
     private let engine = AutomationEngine()
     private var engineTask: Task<Void, Never>?
+    /// Per-fire token used to race-guard `lastFiredPoint`'s clear timer.
+    /// Each fire writes a fresh UUID; only the latest timer survives.
+    private var lastFiredToken: UUID?
 
     // MARK: - Logger
 
@@ -236,13 +247,28 @@ final class AppState: ObservableObject {
         case .actionFired(let index, let reason):
             lastFiredIndex = index
             if timeline.actions.indices.contains(index) {
-                let id = timeline.actions[index].id
+                let action = timeline.actions[index]
+                let id = action.id
                 activityOrder.removeAll { $0 == id }
                 activityOrder.insert(id, at: 0)
                 justFiredID = id
+                // Publish the fired click point for the live-preview ripple.
+                // action.x/y are already in the same coordinate space as the
+                // captured frame (window-relative, absolute, or region-relative).
+                lastFiredPoint = CGPoint(x: action.x, y: action.y)
+                lastFiredLabel = action.label.isEmpty ? "Action #\(index + 1)" : action.label
+                let token = UUID()
+                lastFiredToken = token
                 Task { @MainActor [weak self] in
                     try? await Task.sleep(nanoseconds: 1_000_000_000)
                     if self?.justFiredID == id { self?.justFiredID = nil }
+                }
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(nanoseconds: 1_200_000_000)
+                    // Only clear if no newer fire has replaced us.
+                    if self?.lastFiredToken == token {
+                        self?.lastFiredPoint = nil
+                    }
                 }
             }
             logger.click("Action #\(index + 1)", details: reason)

@@ -5,8 +5,9 @@
 //  Window enumeration + capture for all four TargetSpec variants.
 //
 //  Capture path:
-//    macOS 14+ → ScreenCaptureKit (SCScreenshotManager.captureImage)
-//    macOS 13  → CGWindowListCreateImage (deprecated in 26 SDK but functional)
+//    macOS 14+ → ScreenCaptureKit (SCScreenshotManager.captureImage with
+//                an SCContentFilter that excludes this app's own windows)
+//    macOS 13  → CGWindowList (window-array form, filtering out our PID)
 //
 //  Window enumeration:
 //    macOS 14+ → SCShareableContent.current (async)
@@ -210,24 +211,36 @@ enum ScreenCapture {
         )
     }
 
+    /// Capture a screen region, EXCLUDING our own app's windows so the
+    /// floating clicker UI never pollutes the captured frame.
+    ///
+    /// macOS 14+: capture the display that contains `rect` with an
+    /// `SCContentFilter` that excludes our own `SCRunningApplication`, then
+    /// crop the resulting full-display `CGImage` to `rect` (scaled by the
+    /// display's backing factor, since SCK returns pixels at retina
+    /// resolution while `rect` is in points).
+    ///
+    /// macOS 13: build a `CGWindowID` array from on-screen windows whose
+    /// owner PID isn't ours, then composite them via
+    /// `CGImage(windowListFromArray:...)`.
     static func captureRegion(_ rect: CGRect) -> CGImage? {
-        if #available(macOS 15.2, *) {
-            // SCScreenshotManager.captureImage(in:) added in 15.2 — modern path.
-            if let image = captureRegionSCK(rect: rect) {
+        if #available(macOS 14.0, *) {
+            if let image = captureRegionExcludingOwnApp(rect: rect) {
+                return image
+            }
+            // Fall through to CGWindowList on SCK failure.
+        }
+        return captureRegionCGArray(rect: rect)
+    }
+
+    /// Capture a whole display, EXCLUDING our own app's windows.
+    static func captureFullScreen(_ displayID: CGDirectDisplayID) -> CGImage? {
+        if #available(macOS 14.0, *) {
+            if let image = captureFullScreenSCK(displayID: displayID) {
                 return image
             }
         }
-        // CGWindowList path (works on all versions, deprecated in 26).
-        return CGWindowListCreateImage(
-            rect, [.optionOnScreenOnly], kCGNullWindowID, [.boundsIgnoreFraming]
-        )
-    }
-
-    static func captureFullScreen(_ displayID: CGDirectDisplayID) -> CGImage? {
-        let bounds = CGDisplayBounds(displayID)
-        return CGWindowListCreateImage(
-            bounds, [.optionOnScreenOnly], kCGNullWindowID, [.boundsIgnoreFraming]
-        )
+        return captureFullScreenCGArray(displayID: displayID)
     }
 
     static func capture(for spec: TargetSpec, resolvedWindow: CapturedWindow?) -> CGImage? {
@@ -255,22 +268,122 @@ enum ScreenCapture {
         return captureImageSCK(filter: filter)
     }
 
-    /// Capture a region via SCScreenshotManager (macOS 15.2+).
-    @available(macOS 15.2, *)
-    private static func captureRegionSCK(rect: CGRect) -> CGImage? {
-        let box = ResultBox<CGImage?>()
-        let semaphore = DispatchSemaphore(value: 0)
-        Task { @Sendable in
-            do {
-                let image = try await SCScreenshotManager.captureImage(in: rect)
-                box.set(image)
-            } catch {
-                box.set(nil)
-            }
-            semaphore.signal()
+    /// Find our own `SCRunningApplication` inside a shareable-content
+    /// snapshot by matching `Bundle.main.bundleIdentifier`. Returns nil when
+    /// the bundle ID is unset or our app isn't present in the snapshot.
+    @available(macOS 14.0, *)
+    private static func ownApplication(in content: SCShareableContent) -> SCRunningApplication? {
+        guard let bid = Bundle.main.bundleIdentifier else { return nil }
+        return content.applications.first { $0.bundleIdentifier == bid }
+    }
+
+    /// Find the `SCDisplay` whose `displayID` matches the given
+    /// `CGDirectDisplayID`. Returns nil if not present in the snapshot.
+    @available(macOS 14.0, *)
+    private static func scDisplay(matching displayID: CGDirectDisplayID, in content: SCShareableContent) -> SCDisplay? {
+        content.displays.first { $0.displayID == displayID }
+    }
+
+    /// macOS 14+ full-screen capture excluding our own app's windows.
+    /// Builds `SCContentFilter(display:excludingApplications:exceptingWindows:)`
+    /// with our `SCRunningApplication`, then runs it through the shared
+    /// `captureImageSCK(filter:)` helper.
+    @available(macOS 14.0, *)
+    private static func captureFullScreenSCK(displayID: CGDirectDisplayID) -> CGImage? {
+        guard let content = syncShareableContent(),
+              let scDisplay = scDisplay(matching: displayID, in: content) else { return nil }
+        let excluded = ownApplication(in: content).map { [$0] } ?? []
+        let filter = SCContentFilter(
+            display: scDisplay,
+            excludingApplications: excluded,
+            exceptingWindows: []
+        )
+        return captureImageSCK(filter: filter)
+    }
+
+    /// macOS 14+ region capture excluding our own app's windows. Captures the
+    /// display that owns `rect` with the exclusion filter, then crops the
+    /// returned full-display image down to `rect`.
+    ///
+    /// Scale handling: SCK returns pixels at the display's backing resolution
+    /// (retina = 2x the points that `rect` is expressed in). We compute the
+    /// real backing scale as `image.width / displayBounds.width` and multiply
+    /// every crop coordinate by it, so the crop lands on the right pixels
+    /// regardless of retina/scaling/multi-display DPI differences.
+    @available(macOS 14.0, *)
+    private static func captureRegionExcludingOwnApp(rect: CGRect) -> CGImage? {
+        // Resolve the CGDirectDisplayID that contains the largest portion of
+        // rect, then map it to an SCDisplay inside the shareable snapshot.
+        var did: CGDirectDisplayID = 0
+        var count: UInt32 = 0
+        CGGetDisplaysWithRect(rect, 1, &did, &count)
+        guard count > 0, did != kCGNullDirectDisplay,
+              let content = syncShareableContent(),
+              let scDisplay = scDisplay(matching: did, in: content) else { return nil }
+
+        let excluded = ownApplication(in: content).map { [$0] } ?? []
+        let filter = SCContentFilter(
+            display: scDisplay,
+            excludingApplications: excluded,
+            exceptingWindows: []
+        )
+        guard let fullImage = captureImageSCK(filter: filter) else { return nil }
+
+        // Display origin in global coords, so we can shift rect into the
+        // display's local space before scaling.
+        let displayBounds = CGDisplayBounds(did)
+        let localOriginX = rect.origin.x - displayBounds.origin.x
+        let localOriginY = rect.origin.y - displayBounds.origin.y
+
+        // Backing scale: retina displays report image.width == 2 * bounds.width.
+        let scaleX = CGFloat(fullImage.width)  / displayBounds.width
+        let scaleY = CGFloat(fullImage.height) / displayBounds.height
+
+        let cropRect = CGRect(
+            x: localOriginX * scaleX,
+            y: localOriginY * scaleY,
+            width:  rect.width  * scaleX,
+            height: rect.height * scaleY
+        )
+        return fullImage.cropping(to: cropRect)
+    }
+
+    /// macOS 13 (and SCK-fallback) full-screen capture. Builds a `CGWindowID`
+    /// array of every on-screen window whose owner PID isn't ours, then
+    /// composites just those windows via the `CGImage(windowListFromArray:...)`
+    /// initializer. Replaces the old `CGWindowListCreateImage` call which
+    /// always included this app's floating window.
+    private static func captureFullScreenCGArray(displayID: CGDirectDisplayID) -> CGImage? {
+        let bounds = CGDisplayBounds(displayID)
+        return captureCGArray(in: bounds)
+    }
+
+    /// macOS 13 (and SCK-fallback) region capture. Same PID-excluded window
+    /// array approach as `captureFullScreenCGArray`, scoped to `rect`.
+    private static func captureRegionCGArray(rect: CGRect) -> CGImage? {
+        captureCGArray(in: rect)
+    }
+
+    /// Shared helper: composite every on-screen window whose owner PID isn't
+    /// `getpid()` into a single image clipped to `bounds`.
+    private static func captureCGArray(in bounds: CGRect) -> CGImage? {
+        let ownPID = getpid()
+        guard let raw = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else {
+            return nil
         }
-        semaphore.wait()
-        return box.get() ?? nil
+        let windowIDs: [NSNumber] = raw.compactMap { w in
+            let pid = (w[kCGWindowOwnerPID as String] as? Int32) ?? 0
+            guard pid != ownPID else { return nil }
+            let wid = (w[kCGWindowNumber as String] as? Int) ?? 0
+            return wid == 0 ? nil : NSNumber(value: wid)
+        }
+        guard !windowIDs.isEmpty else { return nil }
+        let cfArray = windowIDs as CFArray
+        return CGImage(
+            windowListFromArrayScreenBounds: bounds,
+            windowArray: cfArray,
+            imageOption: [.boundsIgnoreFraming]
+        )
     }
 
     /// Shared SCK image-capture helper using a content filter.
