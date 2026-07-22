@@ -14,6 +14,7 @@ enum ClickType: String, Codable, CaseIterable, Sendable {
     case single
     case double
     case longPress = "long_press"
+    case rightClick = "right_click"
 
     /// Python schema uses "long_press" — alias kept for compatibility.
     static func from(_ raw: String) -> ClickType {

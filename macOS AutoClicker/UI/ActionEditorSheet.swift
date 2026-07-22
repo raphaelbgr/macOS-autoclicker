@@ -23,6 +23,42 @@ struct ActionEditorSheet: View {
     @State private var isCapturing = false
     @State private var captureError: String?
 
+    /// Gesture-first choices shown in the single Action picker. The first four
+    /// are plain mouse gestures (actionType == .click + a ClickType); the last
+    /// two are the phone-only iPhone Mirroring commands kept for imported
+    /// projects.
+    private enum UIAction: Hashable {
+        case click, doubleClick, rightClick, longPress, openApp, closeApp
+    }
+
+    private var uiAction: Binding<UIAction> {
+        Binding(
+            get: {
+                switch action.actionType {
+                case .openApp:  return .openApp
+                case .closeApp: return .closeApp
+                case .click:
+                    switch action.clickType {
+                    case .single:     return .click
+                    case .double:     return .doubleClick
+                    case .rightClick: return .rightClick
+                    case .longPress:  return .longPress
+                    }
+                }
+            },
+            set: { new in
+                switch new {
+                case .click:       action.actionType = .click; action.clickType = .single
+                case .doubleClick: action.actionType = .click; action.clickType = .double
+                case .rightClick:  action.actionType = .click; action.clickType = .rightClick
+                case .longPress:   action.actionType = .click; action.clickType = .longPress
+                case .openApp:     action.actionType = .openApp
+                case .closeApp:    action.actionType = .closeApp
+                }
+            }
+        )
+    }
+
     init(appState: AppState, isPresented: Binding<Bool>, editIndex: Int?, seed: ClickAction? = nil) {
         self.appState = appState
         self._isPresented = isPresented
@@ -49,14 +85,18 @@ struct ActionEditorSheet: View {
                 }
 
                 Section("Action") {
-                    Picker("Do", selection: $action.actionType) {
-                        Text("Click").tag(ActionType.click)
-                        Text("Close app").tag(ActionType.closeApp)
-                        Text("Open app").tag(ActionType.openApp)
+                    Picker("Action", selection: uiAction) {
+                        Text("Click").tag(UIAction.click)
+                        Text("Double click").tag(UIAction.doubleClick)
+                        Text("Right click").tag(UIAction.rightClick)
+                        Text("Long press").tag(UIAction.longPress)
+                        Divider()
+                        Text("Open app (iPhone Mirroring)").tag(UIAction.openApp)
+                        Text("Close app (iPhone Mirroring)").tag(UIAction.closeApp)
                     }
                     if action.actionType != .click {
-                        Label("App actions only run with the iPhone Mirroring target — on Window/Region/Full-Screen targets they're skipped.",
-                              systemImage: "info.circle")
+                        Label("Phone-only action: sends commands to the mirrored iPhone (Spotlight / App Switcher). Runs only with the iPhone Mirroring target — skipped on Window/Region/Full-Screen.",
+                              systemImage: "iphone")
                             .font(.caption)
                             .foregroundStyle(DesignTokens.Status.warning)
                             .fixedSize(horizontal: false, vertical: true)
@@ -123,10 +163,14 @@ struct ActionEditorSheet: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
 
-                        LabeledContent("OCR text (comma = OR)") {
-                            TextField("Victory, Game Over", text: $action.matchTexts)
+                        LabeledContent("When text detected (OCR)") {
+                            TextField("eg: Game Over, Next", text: $action.matchTexts)
                                 .frame(maxWidth: 240)
+                                .accessibilityIdentifier("ocrTextField")
                         }
+                        Text("Fires when any of these texts is read on screen. Separate alternatives with commas.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -139,12 +183,6 @@ struct ActionEditorSheet: View {
                             TextField("Y", value: $action.y, format: .number.grouping(.never))
                                 .frame(width: 60)
                         }
-                    }
-
-                    Picker("Click type", selection: $action.clickType) {
-                        Text("Single").tag(ClickType.single)
-                        Text("Double").tag(ClickType.double)
-                        Text("Long press").tag(ClickType.longPress)
                     }
 
                     if action.clickType == .longPress {

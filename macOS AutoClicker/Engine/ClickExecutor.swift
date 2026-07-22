@@ -70,6 +70,8 @@ final class ClickExecutor: @unchecked Sendable {
                 try doubleClick(at: point)
             case .longPress:
                 try longPress(at: point, durationMs: durationMs, cancellation: cancellation)
+            case .rightClick:
+                try rightClick(at: point)
             }
             if let original { postMove(to: original) }
             return true
@@ -117,6 +119,12 @@ final class ClickExecutor: @unchecked Sendable {
         try postEvent(type: .leftMouseUp, at: point)
     }
 
+    private func rightClick(at point: CGPoint) throws {
+        try postEvent(type: .rightMouseDown, at: point, button: .right)
+        Thread.sleep(forTimeInterval: 0.05)
+        try postEvent(type: .rightMouseUp, at: point, button: .right)
+    }
+
     private func doubleClick(at point: CGPoint) throws {
         // First click with clickState=1
         try postEvent(type: .leftMouseDown, at: point, clickState: 1)
@@ -149,13 +157,14 @@ final class ClickExecutor: @unchecked Sendable {
     private func postEvent(
         type: CGEventType,
         at point: CGPoint,
-        clickState: Int64 = 0
+        clickState: Int64 = 0,
+        button: CGMouseButton = .left
     ) throws {
         guard let event = CGEvent(
             mouseEventSource: nil,
             mouseType: type,
             mouseCursorPosition: point,
-            mouseButton: .left
+            mouseButton: button
         ) else {
             throw CGEventError.creationFailed
         }
