@@ -76,16 +76,18 @@ struct LivePreviewView: View {
                             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
 
                         // Fired-click marker, anchored ON the image at the
-                        // exact click spot. The mapping is computed live from
-                        // the current fit geometry (points → retina pixels →
-                        // displayed frame) so it can never use stale sizes.
+                        // exact click spot. Action x/y are in CAPTURE-IMAGE
+                        // pixel space (that's what the position picker writes
+                        // and what the engine matches against), and the live
+                        // preview is produced by the same capture pipeline —
+                        // so the mapping is a pure image-pixels → displayed-
+                        // frame scale, computed live from the current fit.
                         if let fired = appState.lastFiredPoint {
-                            let pointScale = NSScreen.main?.backingScaleFactor ?? 2.0
                             let sx = fit.width / previewImage.size.width
                             let sy = fit.height / previewImage.size.height
                             let p = CGPoint(
-                                x: min(max(0, fired.x * pointScale * sx), fit.width),
-                                y: min(max(0, fired.y * pointScale * sy), fit.height)
+                                x: min(max(0, fired.x * sx), fit.width),
+                                y: min(max(0, fired.y * sy), fit.height)
                             )
                             FiredRippleOverlay(point: p)
                                 .id(rippleID)
