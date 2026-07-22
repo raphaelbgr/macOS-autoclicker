@@ -37,6 +37,7 @@
 		AA000047 /* MainWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100047 /* MainWindow.swift */; };
 		AA000048 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100048 /* SettingsView.swift */; };
 		BB000001 /* AutoClickerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100001 /* AutoClickerUITests.swift */; };
+		BB000002 /* ActionEditorCombinationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB100002 /* ActionEditorCombinationTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +73,7 @@
 		AA100011 /* MacOSAutoClicker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacOSAutoClicker.entitlements; sourceTree = "<group>"; };
 		AA200000 /* macOS AutoClicker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "macOS AutoClicker.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB100001 /* AutoClickerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoClickerUITests.swift; sourceTree = "<group>"; };
+		BB100002 /* ActionEditorCombinationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionEditorCombinationTests.swift; sourceTree = "<group>"; };
 		BB200001 /* macOS AutoClickerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "macOS AutoClickerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -183,6 +185,7 @@
 			isa = PBXGroup;
 			children = (
 				BB100001 /* AutoClickerUITests.swift */,
+				BB100002 /* ActionEditorCombinationTests.swift */,
 			);
 			path = "macOS AutoClickerUITests";
 			sourceTree = "<group>";
@@ -362,6 +365,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BB000001 /* AutoClickerUITests.swift in Sources */,
+				BB000002 /* ActionEditorCombinationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
