@@ -87,6 +87,16 @@ struct TimelineView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 
+            Button {
+                editingIndex = idx
+                showEditor = true
+            } label: {
+                Image(systemName: "square.and.pencil")
+            }
+            .buttonStyle(.borderless)
+            .help("Edit this action")
+            .accessibilityIdentifier("editActionButton")
+
             Toggle("", isOn: enabledBinding(at: idx))
                 .toggleStyle(.switch)
                 .controlSize(.small)
@@ -98,7 +108,7 @@ struct TimelineView: View {
             editingIndex = idx
             showEditor = true
         }
-        .help("Double-click to edit")
+        .help("Double-click or use the pencil to edit")
     }
 
     @ViewBuilder

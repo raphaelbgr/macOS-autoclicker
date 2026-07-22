@@ -210,6 +210,8 @@ struct PermissionOnboardingSheet: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
+                Text("Already in the list but still not working? Select the old entry and click  −  to remove it first — it may point to a previous copy of the app. Then add it fresh:")
+                    .foregroundStyle(DesignTokens.Status.warning)
                 Text("1.  Click the  +  button under the permission list.")
                 Text("2.  Press  ⌘⇧G , paste the path above, press Return.")
                 Text("3.  Select “macOS AutoClicker.app”, click Open.")
