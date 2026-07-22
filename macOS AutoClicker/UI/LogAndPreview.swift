@@ -125,12 +125,16 @@ struct LivePreviewView: View {
         }
         .onChange(of: appState.lastFiredPoint) { new in
             guard let point = new, let img = previewImage, displayedImageSize.width > 0 else { return }
-            // previewImage.size is in image pixels (we set NSImage size to
-            // cg.width×cg.height); scale into the displayed frame so the
-            // ripple lands at the right spot regardless of preview size.
+            // The fired point is in POINTS (CGEvent space); the capture is in
+            // retina PIXELS (typically 2x). Convert points → pixels with the
+            // screen's backing scale, then pixels → displayed frame.
+            let pointScale = NSScreen.main?.backingScaleFactor ?? 2.0
             let scaleX = displayedImageSize.width  / img.size.width
             let scaleY = displayedImageSize.height / img.size.height
-            firedDisplayPoint = CGPoint(x: point.x * scaleX, y: point.y * scaleY)
+            firedDisplayPoint = CGPoint(
+                x: point.x * pointScale * scaleX,
+                y: point.y * pointScale * scaleY
+            )
             rippleID = UUID()
         }
     }
@@ -158,8 +162,22 @@ struct LivePreviewView: View {
     }
 
     private func capture() {
-        guard let w = ScreenCapture.resolveWindow(for: appState.settings.target),
-              let cg = ScreenCapture.captureWindow(w) else {
+        // Same path the engine uses: window-based targets need a resolved
+        // window; Region/Full-Screen capture without one. (resolveWindow
+        // returns nil for region/fullScreen, so requiring it here left the
+        // preview permanently empty on those targets.)
+        let target = appState.settings.target
+        let window = ScreenCapture.resolveWindow(for: target)
+        let needsWindow: Bool
+        switch target {
+        case .iphoneMirroring, .window: needsWindow = true
+        case .region, .fullScreen:      needsWindow = false
+        }
+        if needsWindow && window == nil {
+            previewImage = nil
+            return
+        }
+        guard let cg = ScreenCapture.capture(for: target, resolvedWindow: window) else {
             previewImage = nil
             return
         }
