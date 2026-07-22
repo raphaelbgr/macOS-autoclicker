@@ -392,6 +392,17 @@ enum ScreenCapture {
         let config = SCStreamConfiguration()
         config.showsCursor = false
         config.ignoreShadowsSingleWindow = true
+        // Capture at NATIVE PIXEL resolution. The default configuration
+        // returns a point-size (downscaled) frame, which would mismatch the
+        // legacy CGWindowList captures and every stored reference image —
+        // action x/y live in retina-pixel space.
+        if #available(macOS 14.0, *) {
+            let scale = CGFloat(filter.pointPixelScale)
+            if filter.contentRect.width > 0, scale > 0 {
+                config.width  = Int(filter.contentRect.width  * scale)
+                config.height = Int(filter.contentRect.height * scale)
+            }
+        }
         let box = ResultBox<CGImage?>()
         let semaphore = DispatchSemaphore(value: 0)
         Task { @Sendable in
