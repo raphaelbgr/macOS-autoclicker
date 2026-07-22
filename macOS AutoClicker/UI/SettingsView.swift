@@ -65,7 +65,7 @@ struct SettingsView: View {
                     permissionPill(granted: ScreenCapture.hasScreenRecordingPermission)
                 }
                 LabeledContent("Accessibility") {
-                    permissionPill(granted: ClickExecutor.hasPostEventPermission)
+                    permissionPill(granted: ClickExecutor.hasAccessibilityPermission)
                 }
                 Button("Open System Settings → Privacy & Security") {
                     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {

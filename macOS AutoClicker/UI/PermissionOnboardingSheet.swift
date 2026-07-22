@@ -160,12 +160,13 @@ struct PermissionOnboardingSheet: View {
     @ViewBuilder
     private var executablePathSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("App location", systemImage: "folder")
+            Label("Not in the list? Add the app manually", systemImage: "folder.badge.plus")
                 .font(.headline)
 
-            Text("Use this exact path when adding the app to the System Settings permission list.")
+            Text("If “macOS AutoClicker” isn’t already shown in the Accessibility or Screen Recording list, add it using the exact path below:")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(bundlePath)
@@ -208,9 +209,15 @@ struct PermissionOnboardingSheet: View {
                 .accessibilityIdentifier("onboardingCopyPathButton")
             }
 
-            Text("If the app is not already listed: click +, press Cmd-Shift-G, paste the path above, then Open. Turn its switch ON.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("1.  Click the  +  button under the permission list.")
+                Text("2.  Press  ⌘⇧G , paste the path above, press Return.")
+                Text("3.  Select “macOS AutoClicker.app”, click Open.")
+                Text("4.  Turn its switch ON.")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 6)
     }
