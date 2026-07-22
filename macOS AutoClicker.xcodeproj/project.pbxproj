@@ -491,6 +491,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				// Sign local Debug builds with a stable Apple Development identity
+				// so macOS TCC permission grants (Accessibility / Screen Recording)
+				// survive rebuilds. Ad-hoc signing changes the code hash each build,
+				// which voids the grant and forces the user to re-authorize every run.
+				// Release/CI signing is unaffected (handled by scripts/sign-notarize.sh).
+				DEVELOPMENT_TEAM = 2Q3K46ZVAF;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "macOS AutoClicker/App/Info.plist";
