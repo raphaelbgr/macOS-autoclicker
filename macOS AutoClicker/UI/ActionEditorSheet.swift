@@ -26,6 +26,8 @@ struct ActionEditorSheet: View {
     /// capture and on initial load of an existing reference. Rendered as
     /// tappable chips below the OCR TextField.
     @State private var detectedTexts: [String] = []
+    /// Scratch input for the "Add custom text" OCR row; cleared on each add.
+    @State private var customOCRText: String = ""
 
     /// Gesture-first choices shown in the single Action picker. The first
     /// nine are plain mouse gestures (actionType == .click + a ClickType); the
@@ -259,6 +261,25 @@ struct ActionEditorSheet: View {
                                 .foregroundStyle(.secondary)
                                 .help("OCR runs every monitor cycle; listing several alternatives lets one action cover a few wordings")
 
+                            // Explicit custom-text entry: type anything and Add
+                            // (or press Return) to append it as another OCR
+                            // alternative — same dedupe path as the chips.
+                            HStack(spacing: 6) {
+                                TextField("", text: $customOCRText, prompt: Text("Add custom text…"))
+                                    .frame(maxWidth: 220)
+                                    .accessibilityIdentifier("ocrCustomTextField")
+                                    .onSubmit(addCustomText)
+                                    .help("Type any word or phrase the OCR should watch for, then press Return or Add")
+                                Button(action: addCustomText) {
+                                    Label("Add", systemImage: "plus.circle.fill")
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(customOCRText.trimmingCharacters(in: .whitespaces).isEmpty)
+                                .accessibilityIdentifier("ocrAddCustomButton")
+                                .help("Append the typed text to the OCR match list above")
+                            }
+
                             // OCR suggestion chips: detected phrases that the
                             // user can append with a click. The TextField above
                             // stays fully editable — chips only insert text.
@@ -456,6 +477,15 @@ struct ActionEditorSheet: View {
                 detectedTexts = cleaned
             }
         }
+    }
+
+    /// Append the typed custom text to the OCR match list (reuses the chip
+    /// path for trimming + case-insensitive dedupe), then clear the input.
+    private func addCustomText() {
+        let t = customOCRText.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return }
+        addChip(t)
+        customOCRText = ""
     }
 
     /// Append a detected-text chip to `action.matchTexts`. Skips if the same
