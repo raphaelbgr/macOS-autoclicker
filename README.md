@@ -18,9 +18,17 @@ macOS OCR AutoClicker captures a target — any **window**, a **screen region**,
 
 ### Match methods
 
-- **Visual (default)** — Apple Vision `VNGenerateImageFeaturePrintRequest` compares the current capture against your reference screenshot. Semantic, robust to minor UI shifts.
-- **Pixel-exact (SSIM)** — Accelerate/vImage SSIM for power users who need pixel-precise matching.
-- **OCR text** — `VNRecognizeTextRequest` triggers an action when specific text appears on screen.
+- **Pixel-exact SSIM (default)** — Accelerate/vImage structural similarity, the same algorithm the original Python app used (scikit-image), so imported projects and their thresholds behave identically.
+- **Visual (featurePrint)** — Apple Vision `VNGenerateImageFeaturePrintRequest`. Semantic, robust to minor UI shifts; switchable per project.
+- **OCR text** — `VNRecognizeTextRequest` triggers an action when specific text appears on screen. The editor OCR-scans each reference and offers the detected strings as one-click chips.
+
+### Actions
+
+Nine mouse gestures — **Click, Double, Triple, Right, Middle click, Long press, Drag (start → end), Scroll up / down** — all posted as real `CGEvent`s, plus the iPhone-Mirroring-only **Open app / Close app** commands. Actions fire on screen match or **chained after another action** (with per-action delay); chains cascade with cycle protection.
+
+### Live feedback
+
+The right-hand pane shows the live capture (~1 fps) with a **red reticle ripple marking the exact clicked spot** of each fired action, a transient "Fired: … at (x, y)" caption, and a color-coded activity log. The timeline offers a **Sort by activity** switch that floats the most recently fired action to the top with a fade highlight. Full-screen and region captures **exclude the app's own windows**, so the UI never pollutes references or matching. Every control in the app has an explanatory hover tooltip.
 
 ## Featured use case: iPhone Mirroring
 
@@ -32,8 +40,10 @@ See [`docs/iphone-mirroring-guide.md`](docs/iphone-mirroring-guide.md) for the t
 
 - **macOS 13.0** (Ventura) or later
 - Two macOS permissions, granted on first launch:
-  - **Screen Recording** — to capture windows and regions
-  - **Accessibility** — to synthesize clicks
+  - **Screen Recording** — to capture windows and regions (takes effect after an app restart — the onboarding offers Quit & Reopen)
+  - **Accessibility** — to synthesize clicks (detected live, within ~2s of granting)
+
+The onboarding screen polls the real grant state every 2 seconds, shows the app's exact bundle path with Reveal/Copy buttons for the manual "+" add flow, and explains the off-and-on re-authorize step for grants that go stale after an update. See [`docs/permissions-and-signing.md`](docs/permissions-and-signing.md) for the details and gotchas.
 
 ## Distribution
 
@@ -57,6 +67,17 @@ Requires Xcode 15+ (developed on Xcode 26 / Swift 6.3). Bundle ID: `com.fastsoft
 ./scripts/build.sh           # Release build → dist/macOS AutoClicker.app
 ./scripts/make-dmg.sh        # Pack into dist/macOS AutoClicker.dmg
 ```
+
+### UI tests
+
+Two XCUITest suites (15 tests): a smoke suite covering the main flows and a combination suite asserting the action editor's conditional UI across the full trigger × action matrix.
+
+```bash
+xcodebuild -project "macOS AutoClicker.xcodeproj" -scheme "macOS AutoClicker" \
+  -destination 'platform=macOS' test
+```
+
+macOS gates UI automation behind an interactive authorization that re-locks periodically: if the run fails with "Timed out while enabling automation mode", run the tests once from Xcode (⌘U) and authenticate, then CLI runs work. See [`docs/testing.md`](docs/testing.md). **Warning:** the suites launch with `-uitest-reset`, which wipes the app's project store — back up `~/Library/Application Support/macOS-autoclicker/projects/` first.
 
 ### Distribution (notarized DMG)
 
