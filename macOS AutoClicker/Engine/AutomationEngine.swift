@@ -223,7 +223,9 @@ actor AutomationEngine {
                     type: action.clickType,
                     durationMs: action.durationMs,
                     background: inputs.settings.backgroundClick,
-                    cancellation: cancellation
+                    cancellation: cancellation,
+                    endX: Int(window.frame.origin.x) + action.endX,
+                    endY: Int(window.frame.origin.y) + action.endY
                 )
                 if action.repeatCount > 1 { try? await sleepInterruptible(0.05) }
                 _ = n

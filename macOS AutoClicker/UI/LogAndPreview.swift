@@ -49,6 +49,7 @@ struct LogView: View {
         }
         .background(.black.opacity(0.03))
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
+        .help("Activity log — each line records what the engine matched, fired, or skipped, newest at the bottom")
     }
 }
 
@@ -67,6 +68,7 @@ struct LivePreviewView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+                    .help("Most recent screen capture from the running automation — refreshes about once a second")
             } else {
                 ContentUnavailableBox(
                     icon: "eye.slash",
@@ -76,6 +78,7 @@ struct LivePreviewView: View {
                         : "Start automation to see live captures"
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .help("Live preview is empty — it fills with screenshots once the automation engine starts capturing")
             }
         }
         .onReceive(timer) { _ in

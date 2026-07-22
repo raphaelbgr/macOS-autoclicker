@@ -25,12 +25,14 @@ struct TargetPickerView: View {
             .pickerStyle(.segmented)
             .labelsHidden()
             .accessibilityIdentifier("targetPicker")
+            .help("What to capture: iPhone Mirroring locks to that window and unlocks iOS commands; Window tracks one app window; Region is a drawn rectangle; Full Screen grabs the whole display")
 
             switch selectedKind {
             case .iphoneMirroring:
                 Text("Locks to the iPhone Mirroring window when present. Unlocks Home / App Switcher / Spotlight / Open / Close app actions.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .help("Special mode: detects the iPhone Mirroring window automatically and enables the iOS-only app commands")
 
             case .window:
                 HStack {
@@ -40,6 +42,7 @@ struct TargetPickerView: View {
                             Text(displayName(w)).tag(Optional(w))
                         }
                     }
+                    .help("Pick which app window to capture — only currently open, on-screen windows are listed")
                     Button {
                         refreshWindows()
                     } label: {
@@ -63,10 +66,12 @@ struct TargetPickerView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(pickingRegion)
+                .help("Draw a rectangle over any part of the screen — only that area is captured each cycle")
                 if case .region(let r) = appState.settings.target {
                     Text(formatRect(r))
                         .font(.caption.monospaced())
                         .foregroundStyle(.secondary)
+                        .help("The captured rectangle’s origin (top-left) and size in screen pixels")
                 }
 
             case .fullScreen:
@@ -75,6 +80,7 @@ struct TargetPickerView: View {
                         Text("Display \(did)").tag(did)
                     }
                 }
+                .help("Which display to grab in full — choose by its macOS display ID")
             }
         }
         .onAppear { refreshWindows() }

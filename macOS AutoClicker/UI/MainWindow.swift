@@ -55,6 +55,7 @@ struct MainWindow: View {
                 }
                 .disabled(appState.selectedProjectName == nil)
                 .accessibilityIdentifier("addActionButton")
+                .help("Open the action editor to add a new click to the current project")
             }
         }
     }
@@ -90,6 +91,7 @@ struct MainWindow: View {
             Color.black.opacity(0.35)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
+                .help("Dimmed backdrop while permission setup is required — grant both permissions to dismiss")
             PermissionOnboardingSheet(appState: appState, isPresented: $showOnboarding)
                 .frame(maxWidth: 480)
         }
@@ -102,6 +104,7 @@ struct MainWindow: View {
             HStack {
                 Text("Projects")
                     .font(.headline)
+                    .help("Your saved automation projects — each holds its own timeline of actions")
                 Spacer()
                 Button {
                     appState.newProject()
@@ -109,7 +112,7 @@ struct MainWindow: View {
                     Image(systemName: "plus")
                 }
                 .buttonStyle(.borderless)
-                .help("New project")
+                .help("Create a new, empty project to start building a timeline")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -127,6 +130,7 @@ struct MainWindow: View {
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
+                            .help("Click the + above to create your first project")
                     }
                 }
                 .padding(.vertical, 4)
@@ -161,6 +165,7 @@ struct MainWindow: View {
         .buttonStyle(.plain)
         .padding(.horizontal, 6)
         .accessibilityIdentifier("sidebarProjectRow")
+        .help("Open this project in the detail view")
     }
 
     // MARK: - Detail
@@ -190,6 +195,7 @@ struct MainWindow: View {
                     .foregroundStyle(.secondary)
                 Button("New Project") { appState.newProject() }
                     .buttonStyle(.borderedProminent)
+                    .help("Create your first project to start adding actions")
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -203,11 +209,13 @@ struct MainWindow: View {
                     Text(name)
                         .font(.title2.bold())
                         .accessibilityIdentifier("headerProjectTitle")
+                        .help("The currently open project — all actions below belong to it")
                     TargetPickerView(appState: appState)
                 }
                 Spacer()
                 statusPill
                     .padding(.top, 6)
+                    .help("Live run state of the automation engine for this project")
             }
         }
         .padding()
@@ -230,6 +238,7 @@ struct MainWindow: View {
             .buttonStyle(.borderedProminent)
             .tint(appState.automationRunning ? .red : .green)
             .accessibilityIdentifier("startStopButton")
+            .help(appState.automationRunning ? "Stop the running automation loop" : "Start matching the screen and firing actions")
 
             Button {
                 appState.presentAddAction()
@@ -238,6 +247,7 @@ struct MainWindow: View {
             }
             .buttonStyle(.bordered)
             .accessibilityIdentifier("addActionButton")
+            .help("Open the action editor to add a new click to this project")
 
             Spacer()
 
@@ -245,6 +255,7 @@ struct MainWindow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .help("Latest engine status — what it just matched, fired, or is waiting on")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -277,6 +288,7 @@ struct MainWindow: View {
             Text(running ? "Running" : "Idle")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .help(running ? "The automation loop is actively matching and firing actions" : "The automation loop is stopped — press Start to begin")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)

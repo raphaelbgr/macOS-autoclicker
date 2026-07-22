@@ -15,6 +15,11 @@ enum ClickType: String, Codable, CaseIterable, Sendable {
     case double
     case longPress = "long_press"
     case rightClick = "right_click"
+    case middleClick = "middle_click"
+    case tripleClick = "triple_click"
+    case scrollUp = "scroll_up"
+    case scrollDown = "scroll_down"
+    case drag
 
     /// Python schema uses "long_press" — alias kept for compatibility.
     static func from(_ raw: String) -> ClickType {
@@ -63,6 +68,9 @@ struct ClickAction: Codable, Identifiable, Hashable, Sendable {
     var delayMs: Int = 0
     var x: Int = 0
     var y: Int = 0
+    // Drag end point (only meaningful when clickType == .drag).
+    var endX: Int = 0
+    var endY: Int = 0
     var clickType: ClickType = .single
     var durationMs: Int = 100
     var label: String = ""
@@ -91,6 +99,8 @@ struct ClickAction: Codable, Identifiable, Hashable, Sendable {
         case delayMs         = "delay_ms"
         case timestampMs     = "timestamp_ms"  // legacy
         case x, y
+        case endX            = "end_x"
+        case endY            = "end_y"
         case clickType       = "click_type"
         case durationMs      = "duration_ms"
         case label
@@ -115,6 +125,8 @@ struct ClickAction: Codable, Identifiable, Hashable, Sendable {
         delayMs: Int = 0,
         x: Int = 0,
         y: Int = 0,
+        endX: Int = 0,
+        endY: Int = 0,
         clickType: ClickType = .single,
         durationMs: Int = 100,
         label: String = "",
@@ -133,6 +145,7 @@ struct ClickAction: Codable, Identifiable, Hashable, Sendable {
     ) {
         self.delayMs = delayMs
         self.x = x; self.y = y
+        self.endX = endX; self.endY = endY
         self.clickType = clickType
         self.durationMs = durationMs
         self.label = label
@@ -160,6 +173,8 @@ struct ClickAction: Codable, Identifiable, Hashable, Sendable {
         }
         x = try c.decodeIfPresent(Int.self, forKey: .x) ?? 0
         y = try c.decodeIfPresent(Int.self, forKey: .y) ?? 0
+        endX = try c.decodeIfPresent(Int.self, forKey: .endX) ?? 0
+        endY = try c.decodeIfPresent(Int.self, forKey: .endY) ?? 0
         clickType = try c.decodeIfPresent(ClickType.self, forKey: .clickType) ?? .single
         durationMs = try c.decodeIfPresent(Int.self, forKey: .durationMs) ?? 100
         label = try c.decodeIfPresent(String.self, forKey: .label) ?? ""
@@ -188,6 +203,12 @@ struct ClickAction: Codable, Identifiable, Hashable, Sendable {
         try c.encode(threshold, forKey: .threshold)
         try c.encode(enabled, forKey: .enabled)
         try c.encode(repeatCount, forKey: .repeatCount)
+
+        // Drag end point — only when this is a drag action.
+        if clickType == .drag {
+            try c.encode(endX, forKey: .endX)
+            try c.encode(endY, forKey: .endY)
+        }
 
         // Match-source fields — only when non-empty (matches Python behavior).
         if !screenshotPath.isEmpty { try c.encode(screenshotPath, forKey: .screenshotPath) }

@@ -50,13 +50,16 @@ final class ClickExecutor: @unchecked Sendable {
 
     /// Mirrors Python `execute_at_absolute`. The main entry point for clicks
     /// after AutomationEngine has resolved window-relative → absolute coords.
+    /// `endX`/`endY` are the absolute drag end point (only used by .drag).
     @discardableResult
     func clickAtAbsolute(
         _ absX: Int, _ absY: Int,
         type: ClickType,
         durationMs: Int = 100,
         background: Bool = false,
-        cancellation: TaskCancellation? = nil
+        cancellation: TaskCancellation? = nil,
+        endX: Int = 0,
+        endY: Int = 0
     ) -> Bool {
         guard isActive else { return false }
         let point = CGPoint(x: CGFloat(absX), y: CGFloat(absY))
@@ -68,10 +71,23 @@ final class ClickExecutor: @unchecked Sendable {
                 try singleClick(at: point)
             case .double:
                 try doubleClick(at: point)
+            case .tripleClick:
+                try tripleClick(at: point)
             case .longPress:
                 try longPress(at: point, durationMs: durationMs, cancellation: cancellation)
             case .rightClick:
                 try rightClick(at: point)
+            case .middleClick:
+                try middleClick(at: point)
+            case .scrollUp:
+                try scroll(at: point, delta: 5)
+            case .scrollDown:
+                try scroll(at: point, delta: -5)
+            case .drag:
+                let end = CGPoint(x: CGFloat(endX), y: CGFloat(endY))
+                let ok = swipe(from: point, to: end, durationMs: durationMs, cancellation: cancellation)
+                if let original { postMove(to: original) }
+                return ok
             }
             if let original { postMove(to: original) }
             return true
@@ -125,6 +141,13 @@ final class ClickExecutor: @unchecked Sendable {
         try postEvent(type: .rightMouseUp, at: point, button: .right)
     }
 
+    private func middleClick(at point: CGPoint) throws {
+        // Center (scroll-wheel) button press via the "other mouse" event types.
+        try postEvent(type: .otherMouseDown, at: point, button: .center)
+        Thread.sleep(forTimeInterval: 0.05)
+        try postEvent(type: .otherMouseUp, at: point, button: .center)
+    }
+
     private func doubleClick(at point: CGPoint) throws {
         // First click with clickState=1
         try postEvent(type: .leftMouseDown, at: point, clickState: 1)
@@ -133,6 +156,20 @@ final class ClickExecutor: @unchecked Sendable {
         // Second click with clickState=2
         try postEvent(type: .leftMouseDown, at: point, clickState: 2)
         try postEvent(type: .leftMouseUp,   at: point, clickState: 2)
+    }
+
+    private func tripleClick(at point: CGPoint) throws {
+        // Same down/up sequence as a double click, extended with a third
+        // click at clickState=3 — macOS treats the rising clickState count as
+        // a single triple-click gesture (e.g. select-line in text fields).
+        try postEvent(type: .leftMouseDown, at: point, clickState: 1)
+        try postEvent(type: .leftMouseUp,   at: point, clickState: 1)
+        Thread.sleep(forTimeInterval: 0.05)
+        try postEvent(type: .leftMouseDown, at: point, clickState: 2)
+        try postEvent(type: .leftMouseUp,   at: point, clickState: 2)
+        Thread.sleep(forTimeInterval: 0.05)
+        try postEvent(type: .leftMouseDown, at: point, clickState: 3)
+        try postEvent(type: .leftMouseUp,   at: point, clickState: 3)
     }
 
     private func longPress(
@@ -181,6 +218,25 @@ final class ClickExecutor: @unchecked Sendable {
             mouseCursorPosition: point,
             mouseButton: .left
         ) else { return }
+        event.post(tap: postTap)
+    }
+
+    /// Scrolls the mouse wheel by `delta` lines at `point`. The cursor is moved
+    /// to the target first so the scroll event lands on the element under it
+    /// (scroll is dispatched to whatever is under the pointer). Positive delta
+    /// scrolls up, negative scrolls down.
+    private func scroll(at point: CGPoint, delta: Int32) throws {
+        postMove(to: point)
+        guard let event = CGEvent(
+            scrollWheelEvent2Source: nil,
+            units: .line,
+            wheelCount: 1,
+            wheel1: delta,
+            wheel2: 0,
+            wheel3: 0
+        ) else {
+            throw CGEventError.creationFailed
+        }
         event.post(tap: postTap)
     }
 

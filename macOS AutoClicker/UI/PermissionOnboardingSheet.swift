@@ -30,13 +30,16 @@ struct PermissionOnboardingSheet: View {
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 48))
                     .foregroundStyle(.tint)
+                    .help("macOS privacy gate — both toggles below must be granted before the app can capture or click")
                 Text("Two permissions to enable")
                     .font(.title2.bold())
-                Text("macOS OCR AutoClicker needs these to capture windows and send clicks. Both run entirely on your Mac — no data ever leaves your system.")
+                    .help("Screen Recording and Accessibility are both required; neither is optional")
+                Text("macOS OCR AutoClicker needs these to capture windows and send clicks. Both run entirely on your Mac — No data ever leaves your system.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
+                    .help("All screenshot, OCR, and click processing happens locally on this Mac — nothing is uploaded")
             }
 
             permissionRow(
@@ -70,6 +73,7 @@ struct PermissionOnboardingSheet: View {
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("onboardingSkipButton")
+                .help("Dismiss without granting — the app will remind you again since capture and click won’t work")
                 Button("Done") {
                     hasCompleted = true
                     isPresented = false
@@ -77,6 +81,7 @@ struct PermissionOnboardingSheet: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!allGranted)
                 .opacity(allGranted ? 1.0 : 0.5)
+                .help("Confirm both permissions are granted and close this setup screen")
             }
         }
         .padding(32)
@@ -162,23 +167,27 @@ struct PermissionOnboardingSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Not in the list? Add the app manually", systemImage: "folder.badge.plus")
                 .font(.headline)
+                .help("If macOS doesn’t list this app in Privacy & Security, add it by its exact file path")
 
             Text("If “macOS AutoClicker” isn’t already shown in the Accessibility or Screen Recording list, add it using the exact path below:")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .help("A fresh build may not appear in the system list until you add it via the + button and this path")
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(bundlePath)
                     .font(.system(.caption, design: .monospaced))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .help("The .app bundle folder — use this path when adding to Privacy & Security via ⌘⇧G")
                 if let exec = executablePath, exec != bundlePath {
                     Text(exec)
                         .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .help("The inner executable binary — rarely needed, but some setups ask for it instead of the .app")
                 }
             }
             .padding(8)
@@ -196,6 +205,7 @@ struct PermissionOnboardingSheet: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .accessibilityIdentifier("onboardingRevealInFinderButton")
+                .help("Open a Finder window with this app selected so you can drag it into the Privacy list")
 
                 Button {
                     let pb = NSPasteboard.general
@@ -207,15 +217,21 @@ struct PermissionOnboardingSheet: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .accessibilityIdentifier("onboardingCopyPathButton")
+                .help("Copy the .app path to the clipboard so you can paste it into the ⌘⇧G go-to-folder dialog")
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("Already in the list but still not working? Select the old entry and click  −  to remove it first — it may point to a previous copy of the app. Then add it fresh:")
                     .foregroundStyle(DesignTokens.Status.warning)
+                    .help("A stale entry (pointing at an old build) can silently fail even when the switch looks on — remove and re-add it")
                 Text("1.  Click the  +  button under the permission list.")
+                    .help("Step 1 — the + button is at the bottom of the allowed-apps list in Privacy & Security")
                 Text("2.  Press  ⌘⇧G , paste the path above, press Return.")
+                    .help("Step 2 — the go-to-folder shortcut lets you jump straight to the copied path")
                 Text("3.  Select “macOS AutoClicker.app”, click Open.")
+                    .help("Step 3 — confirm the selection so macOS adds the bundle to the list")
                 Text("4.  Turn its switch ON.")
+                    .help("Step 4 — the switch must be on (blue) for the permission to take effect")
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -241,10 +257,12 @@ struct PermissionOnboardingSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Switched on but still blocked?")
                     .font(.callout.weight(.semibold))
+                    .help("A grant can read “on” yet still be denied after an app update — this is how to recover")
                 Text("Screen Recording only takes effect after a restart, and a grant can go stale after the app updates. Quit and reopen — or in System Settings toggle the permission OFF and back ON to re-authorize it.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .help("Screen Recording is checked at launch, so a newly granted toggle needs a restart to register")
                 Button {
                     relaunchApp()
                 } label: {
@@ -253,6 +271,7 @@ struct PermissionOnboardingSheet: View {
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .accessibilityIdentifier("onboardingQuitReopenButton")
+                .help("Quit this app and immediately launch a fresh copy so a new Screen Recording grant takes effect")
             }
         }
         .padding(12)
@@ -278,10 +297,13 @@ struct PermissionOnboardingSheet: View {
                 .font(.system(size: 22))
                 .frame(width: 32)
                 .foregroundStyle(granted ? .green : .secondary)
+                .help(granted ? "This permission is granted — a green check means you’re all set" : "This permission is still missing — click the button to open the relevant System Settings pane")
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.headline)
+                    .help("The macOS privacy category this row grants")
                 Text(description).font(.caption).foregroundStyle(.secondary)
+                    .help("What the app can do once this permission is on")
             }
 
             Spacer()
@@ -291,10 +313,12 @@ struct PermissionOnboardingSheet: View {
                     .foregroundStyle(.green)
                     .font(.caption)
                     .labelStyle(.titleAndIcon)
+                    .help("macOS confirmed this permission is active for the current app build")
             } else {
                 Button(actionTitle, action: action)
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    .help("Opens System Settings at the right pane so you can flip this permission on")
             }
         }
         .padding(.vertical, 6)

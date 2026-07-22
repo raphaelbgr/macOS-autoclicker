@@ -116,17 +116,21 @@ struct TimelineView: View {
                 Text("\(idx + 1)")
                     .font(.caption.monospaced())
                     .foregroundStyle(.secondary)
+                    .help("This action’s position in the timeline (1-based) — used by “After another action” triggers")
             }
             .frame(width: 26, height: 26)
 
             thumbnail(for: action)
+                .help("Miniature of the reference screenshot this action matches against — “OCR” means it matches text instead")
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(action.label.isEmpty ? "Action \(idx + 1)" : action.label)
                     .font(.body.weight(.medium))
                     .strikethrough(!action.enabled)
+                    .help(action.enabled ? "Name of this action" : "Disabled — this action is skipped while running")
 
                 similarityBar(for: idx, action: action)
+                    .help("How closely the live screen currently matches this action’s reference; turns green when it crosses the threshold")
             }
 
             Spacer(minLength: 8)
@@ -135,6 +139,7 @@ struct TimelineView: View {
                 .font(.caption.monospaced())
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .help("Quick summary: click type, repeat count, delay, and action kind")
 
             Button {
                 editTarget = EditTarget(id: idx)
@@ -149,6 +154,7 @@ struct TimelineView: View {
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .labelsHidden()
+                .help("Turn this action on or off without deleting it — off actions stay in the timeline but are skipped")
         }
         .padding(.vertical, 4)
         .background(
@@ -202,10 +208,12 @@ struct TimelineView: View {
                 .progressViewStyle(.linear)
                 .tint(isMatch ? .green : .accentColor)
                 .frame(maxWidth: 220)
+                .help("Live similarity bar — fills as the screen gets closer to the reference")
             Text("\(Int(sim * 100))%")
                 .font(.caption.monospaced())
                 .foregroundStyle(isMatch ? .green : .secondary)
                 .frame(width: 36, alignment: .leading)
+                .help("Current match score as a percentage; green once it meets or exceeds the threshold")
         }
     }
 

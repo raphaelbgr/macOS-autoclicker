@@ -32,16 +32,19 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.radioGroup)
+                    .help("FeaturePrint compares overall shape/layout (forgives small shifts); SSIM demands a near pixel-perfect match")
                 }
 
                 LabeledContent("Monitor interval") {
                     HStack {
                         Slider(value: intervalBinding, in: 100...2000, step: 50)
                             .frame(width: 180)
+                            .help("How often the screen is re-captured and compared — lower is more responsive but uses more CPU")
                         Text("\(appState.settings.monitorIntervalMs) ms")
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                             .frame(width: 60, alignment: .trailing)
+                            .help("Current capture cadence in milliseconds")
                     }
                 }
 
@@ -49,23 +52,27 @@ struct SettingsView: View {
                     HStack {
                         Slider(value: thresholdBinding, in: 0.5...1.0, step: 0.05)
                             .frame(width: 180)
+                            .help("Default similarity cutoff (50–100%) applied to new actions that don’t override it")
                         Text("\(Int(appState.settings.threshold * 100))%")
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                             .frame(width: 40, alignment: .trailing)
+                            .help("Current default cutoff as a percentage")
                     }
                 }
 
                 Toggle("Background click (ghost mode)", isOn: backgroundBinding)
-                    .help("Snap cursor to target, click, restore — don't visibly move the mouse")
+                    .help("Snap cursor to target, click, restore — don’t visibly move the mouse")
             }
 
             Section("Privacy") {
                 LabeledContent("Screen Recording") {
                     permissionPill(granted: ScreenCapture.hasScreenRecordingPermission)
+                        .help("Required to capture the target window or region — check this is granted before running")
                 }
                 LabeledContent("Accessibility") {
                     permissionPill(granted: ClickExecutor.hasAccessibilityPermission)
+                        .help("Required to send synthetic clicks — the app can’t interact with other windows without it")
                 }
                 Button("Open System Settings → Privacy & Security") {
                     if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
@@ -73,6 +80,7 @@ struct SettingsView: View {
                     }
                 }
                 .font(.caption)
+                .help("Jump straight to the macOS Privacy & Security pane to review or grant permissions")
             }
         }
         .formStyle(.grouped)
@@ -84,10 +92,13 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Global Hotkey")
                 .font(.headline)
+                .help("A keyboard shortcut that starts or stops automation from any app, without switching to this window")
             Text("Trigger Start / Stop from anywhere on your Mac.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .help("Once recorded, pressing the combo toggles the engine even when this app is in the background")
             KeyboardShortcuts.Recorder("Toggle automation:", name: .toggleAutomation)
+                .help("Click here and press the key combo you want to assign as the global start/stop shortcut")
             Spacer()
         }
         .padding()
@@ -167,8 +178,10 @@ struct SettingsView: View {
         HStack(spacing: 4) {
             Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                 .foregroundStyle(granted ? .green : .orange)
+                .help(granted ? "Granted — this permission is active" : "Not granted — open System Settings to enable it")
             Text(granted ? "Granted" : "Not granted")
                 .font(.caption)
+                .help(granted ? "macOS allows this capability" : "macOS is still blocking this capability")
         }
     }
 }
