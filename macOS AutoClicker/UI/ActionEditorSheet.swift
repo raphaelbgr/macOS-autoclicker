@@ -48,6 +48,21 @@ struct ActionEditorSheet: View {
                     TextField("Label", text: $action.label, prompt: Text("Optional name"))
                 }
 
+                Section("Action") {
+                    Picker("Do", selection: $action.actionType) {
+                        Text("Click").tag(ActionType.click)
+                        Text("Close app").tag(ActionType.closeApp)
+                        Text("Open app").tag(ActionType.openApp)
+                    }
+                    if action.actionType != .click {
+                        Label("App actions only run with the iPhone Mirroring target — on Window/Region/Full-Screen targets they're skipped.",
+                              systemImage: "info.circle")
+                            .font(.caption)
+                            .foregroundStyle(DesignTokens.Status.warning)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
                 Section("Trigger") {
                     Picker("Type", selection: $action.triggerType) {
                         Text("When screen matches").tag(TriggerType.recognition)
@@ -115,6 +130,7 @@ struct ActionEditorSheet: View {
                     }
                 }
 
+                if action.actionType == .click {
                 Section("Click") {
                     LabeledContent("Position") {
                         HStack {
@@ -146,6 +162,26 @@ struct ActionEditorSheet: View {
                                 .multilineTextAlignment(.trailing)
                                 .frame(width: 60)
                         }
+                    }
+                }
+                }
+
+                if action.actionType == .closeApp {
+                    Section("Close app") {
+                        Picker("Method", selection: $action.closeMethod) {
+                            Text("Force quit (App Switcher)").tag(CloseMethod.forceQuit)
+                            Text("Home button").tag(CloseMethod.home)
+                        }
+                    }
+                }
+
+                if action.actionType == .openApp {
+                    Section("Open app") {
+                        Picker("Method", selection: $action.openMethod) {
+                            Text("Spotlight search").tag(OpenMethod.spotlight)
+                            Text("Tap icon (x, y)").tag(OpenMethod.tapIcon)
+                        }
+                        TextField("App name", text: $action.appName)
                     }
                 }
             }
