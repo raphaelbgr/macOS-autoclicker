@@ -61,6 +61,8 @@ struct PermissionOnboardingSheet: View {
 
             executablePathSection
 
+            reauthorizeNote
+
             HStack(spacing: 12) {
                 Button("Skip for now") {
                     hasCompleted = true
@@ -187,6 +189,41 @@ struct PermissionOnboardingSheet: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
+    }
+
+    // MARK: - Re-authorize note
+
+    /// macOS binds a permission grant to a specific version of the app's code
+    /// signature. After the app updates — or if a grant goes stale — the switch
+    /// can read "on" while the current build is still denied, until the user
+    /// toggles it off and on again. Surface that recovery step up front.
+    @ViewBuilder
+    private var reauthorizeNote: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "arrow.triangle.2.circlepath")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Status.warning)
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Switched on but still blocked?")
+                    .font(.callout.weight(.semibold))
+                Text("This can happen after the app updates. In System Settings, turn the permission OFF and back ON — macOS only re-applies it to the current version once you re-authorize it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .fill(DesignTokens.Status.warning.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.small, style: .continuous)
+                .strokeBorder(DesignTokens.Status.warning.opacity(0.28), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
